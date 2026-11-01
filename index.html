@@ -916,29 +916,11 @@
             </div>
             <div class="p-6 space-y-4 overflow-y-auto text-xs">
                 <p class="text-slate-600">
-                    Masukkan konfigurasi Firebase anda di bawah supaya semua pengguna di <strong>GitHub Pages</strong> boleh melihat dan mengemaskini stok secara <strong>Real-Time</strong> serentak.
+                    Konfigurasi Firebase telah ditetapkan secara automatik ke dalam sistem ini. Anda boleh terus menikmati <strong>Mod Awan</strong> secara langsung.
                 </p>
 
-                <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-[11px] space-y-1">
-                    <p class="font-bold flex items-center"><i class="fa-solid fa-circle-info mr-1.5"></i> Nota Luar Talian:</p>
-                    <p>Jika tiada Firebase dimasukkan, sistem akan menggunakan mod simpanan tempatan (<code class="font-mono bg-amber-100 px-1 rounded">localStorage</code>).</p>
-                </div>
-
-                <div>
-                    <label class="block font-bold text-slate-700 mb-1">Firebase Config JSON Object</label>
-                    <textarea id="firebase-cfg-json" rows="6" placeholder='{
-  "apiKey": "AIzaSy...",
-  "projectId": "royal-bakery-7419b",
-  "databaseURL": "https://royal-bakery-7419b-default-rtdb.firebaseio.com"
-}' class="w-full p-2.5 border border-slate-300 rounded-lg font-mono text-[11px] focus:ring-2 focus:ring-blue-600 focus:outline-none"></textarea>
-                </div>
-
-                <div class="pt-2 flex justify-between items-center">
-                    <button onclick="clearFirebaseConfig()" class="text-rose-600 hover:underline font-semibold">Padam Kunci & Guna Mod Lokal</button>
-                    <div class="space-x-2">
-                        <button onclick="closeModal('modal-config')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-bold hover:bg-slate-100">Tutup</button>
-                        <button onclick="saveFirebaseConfig()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs">Simpan Kunci Cloud</button>
-                    </div>
+                <div class="pt-2 flex justify-end space-x-2">
+                    <button onclick="closeModal('modal-config')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-bold hover:bg-slate-100">Tutup</button>
                 </div>
             </div>
         </div>
@@ -959,16 +941,17 @@
         </div>
     </div>
 
-    <!-- JavaScript Application Logic with Realtime Database (RTDB) Support -->
+    <!-- JavaScript Application Logic with Auto-Embedded Firebase Realtime Database (RTDB) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        let activeFirebaseConfig = null;
-        const savedCfg = localStorage.getItem('rb_user_firebase_cfg');
-        if (savedCfg) {
-            try { activeFirebaseConfig = JSON.parse(savedCfg); } catch(e) {}
-        }
+        // Pre-configured Firebase Realtime Database credentials (Auto-Cloud Mode)
+        let activeFirebaseConfig = {
+            apiKey: "AIzaSyDbEx3Erp3UZFr6oMK4j5LRpiqD04Ca7nU",
+            projectId: "royal-bakery-7419b",
+            databaseURL: "https://royal-bakery-7419b-default-rtdb.firebaseio.com"
+        };
 
         let rtdb = null;
 
@@ -1892,35 +1875,7 @@
 
         /* ==================== FIREBASE CONFIG MODAL FUNCTIONS ==================== */
         function openConfigModal() {
-            const txt = document.getElementById('firebase-cfg-json');
-            if (activeFirebaseConfig) {
-                txt.value = JSON.stringify(activeFirebaseConfig, null, 2);
-            } else {
-                txt.value = '';
-            }
             document.getElementById('modal-config').classList.remove('hidden');
-        }
-
-        function saveFirebaseConfig() {
-            const raw = document.getElementById('firebase-cfg-json').value.trim();
-            try {
-                const parsed = JSON.parse(raw);
-                if (!parsed.databaseURL || !parsed.apiKey) {
-                    showToast("Pastikan JSON mengandungi sekurang-kurangnya apiKey & databaseURL!", "error");
-                    return;
-                }
-                localStorage.setItem('rb_user_firebase_cfg', JSON.stringify(parsed));
-                showToast("Kunci Firebase berjaya disimpan! Memuat semula sistem real-time...", "success");
-                setTimeout(() => location.reload(), 1000);
-            } catch(e) {
-                showToast("Format JSON Firebase tidak sah. Semak semula kurungan dan pembuka kata.", "error");
-            }
-        }
-
-        function clearFirebaseConfig() {
-            localStorage.removeItem('rb_user_firebase_cfg');
-            showToast("Tetapan Firebase dipadam. Menggunakan mod simpanan tempatan.", "info");
-            setTimeout(() => location.reload(), 1000);
         }
 
         function populateDropdowns() {
@@ -2013,8 +1968,6 @@
         window.clearActivityLogs = clearActivityLogs;
         window.printPO = printPO;
         window.openConfigModal = openConfigModal;
-        window.saveFirebaseConfig = saveFirebaseConfig;
-        window.clearFirebaseConfig = clearFirebaseConfig;
     </script>
 </body>
 </html>
