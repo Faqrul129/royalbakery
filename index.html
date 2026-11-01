@@ -521,7 +521,7 @@
                         <input type="text" id="log-search" oninput="renderActivityLogs()" placeholder="Cari nama, staf, nota..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-600">
                     </div>
 
-                    <!-- Time Period Dropdown (Harian, Mingguan, Bulanan) -->
+                    <!-- Time Period Dropdown -->
                     <select id="log-filter-period" onchange="renderActivityLogs()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold">
                         <option value="ALL">Semua Masa</option>
                         <option value="TODAY">Harian (Hari Ini)</option>
@@ -591,7 +591,7 @@
 
                 <!-- Excel Modal Action Tools -->
                 <div class="flex items-center space-x-2 no-print self-end sm:self-auto">
-                    <button onclick="copyExcelFormatToClipboard()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded shadow-xs transition flex items-center space-x-1.5 border border-emerald-500" title="Salin jadual dalam format bersesuaian dengan MS Excel / Google Sheets">
+                    <button onclick="copyExcelFormatToClipboard()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded shadow-xs transition flex items-center space-x-1.5 border border-emerald-500">
                         <i class="fa-solid fa-copy"></i>
                         <span>Salin Format Excel</span>
                     </button>
@@ -627,7 +627,6 @@
                 <div class="bg-white border border-slate-300 shadow-sm rounded overflow-hidden">
                     <table class="excel-table w-full text-left">
                         <thead>
-                            <!-- Column Letters Bar (A, B, C, D, E...) -->
                             <tr class="excel-header-row">
                                 <th class="excel-row-num">#</th>
                                 <th>A <span class="text-[9px] font-normal text-slate-500 block">KOD</span></th>
@@ -728,7 +727,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-1">Stok Maksimum</label>
-                        <input type="number" step="0.1" id="item-par" required placeholder="15" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                        <input type="number" step="0.1" id="item-par" required placeholder="15" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-semibold">
                     </div>
                 </div>
 
@@ -761,7 +760,6 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Item</label>
                     <select id="stock-in-item" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none">
-                        <!-- Dynamic item options -->
                     </select>
                 </div>
 
@@ -805,7 +803,6 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Item</label>
                     <select id="stock-out-item" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-rose-600 focus:outline-none">
-                        <!-- Dynamic item options -->
                     </select>
                 </div>
 
@@ -852,7 +849,6 @@
                 </button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
-                <!-- Printable PO Sheet Area -->
                 <div id="po-printable-area" class="border border-slate-300 rounded-lg p-6 bg-white space-y-4 font-sans text-xs">
                     <div class="flex justify-between items-start border-b border-slate-200 pb-4">
                         <div>
@@ -879,7 +875,6 @@
                                 </tr>
                             </thead>
                             <tbody id="po-items-table" class="divide-y divide-slate-200">
-                                <!-- Dynamic PO rows -->
                             </tbody>
                         </table>
                     </div>
@@ -933,11 +928,8 @@
                     <label class="block font-bold text-slate-700 mb-1">Firebase Config JSON Object</label>
                     <textarea id="firebase-cfg-json" rows="6" placeholder='{
   "apiKey": "AIzaSy...",
-  "authDomain": "your-app.firebaseapp.com",
-  "projectId": "your-app",
-  "storageBucket": "your-app.appspot.com",
-  "messagingSenderId": "123456...",
-  "appId": "1:123456...:web:abc..."
+  "projectId": "royal-bakery-7419b",
+  "databaseURL": "https://royal-bakery-7419b-default-rtdb.firebaseio.com"
 }' class="w-full p-2.5 border border-slate-300 rounded-lg font-mono text-[11px] focus:ring-2 focus:ring-blue-600 focus:outline-none"></textarea>
                 </div>
 
@@ -967,30 +959,18 @@
         </div>
     </div>
 
-    <!-- JavaScript Application Logic with Real-time Cloud Sync & Github Pages Support -->
+    <!-- JavaScript Application Logic with Realtime Database (RTDB) Support -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDatabase, ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // Application Config
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'royal-bakery-kvsas';
-
-        // Read configuration from environment OR saved user settings in localStorage
         let activeFirebaseConfig = null;
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            try { activeFirebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
-        }
-        if (!activeFirebaseConfig) {
-            const savedCfg = localStorage.getItem('rb_user_firebase_cfg');
-            if (savedCfg) {
-                try { activeFirebaseConfig = JSON.parse(savedCfg); } catch(e) {}
-            }
+        const savedCfg = localStorage.getItem('rb_user_firebase_cfg');
+        if (savedCfg) {
+            try { activeFirebaseConfig = JSON.parse(savedCfg); } catch(e) {}
         }
 
-        let db = null;
-        let auth = null;
-        let currentUser = null;
+        let rtdb = null;
 
         // Sample Default Items
         const SAMPLE_ITEMS = [
@@ -1005,7 +985,6 @@
             { id: "9", sku: "BRG-001", name: "Croissant Mentega Royal", category: "Barangan Siap", unit: "dulang (12 biji)", date: "2026-10-06", currentStock: 4, reorderPoint: 2, parLevel: 8, supplier: "Dapur Utama Royal Bakery KVSAS" }
         ];
 
-        // State Variables
         let items = [];
         let activityLogs = [];
 
@@ -1014,7 +993,7 @@
             const dateInput = document.getElementById('item-date');
             if (dateInput) dateInput.value = today;
 
-            if (activeFirebaseConfig) {
+            if (activeFirebaseConfig && activeFirebaseConfig.databaseURL) {
                 await initRealtimeBackend(activeFirebaseConfig);
             } else {
                 updateCloudBadge(false, "Mod Lokal");
@@ -1026,18 +1005,9 @@
         async function initRealtimeBackend(config) {
             try {
                 const app = initializeApp(config);
-                db = getFirestore(app);
-                auth = getAuth(app);
+                rtdb = getDatabase(app);
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    const userCred = await signInWithCustomToken(auth, __initial_auth_token);
-                    currentUser = userCred.user;
-                } else {
-                    const userCred = await signInAnonymously(auth);
-                    currentUser = userCred.user;
-                }
-
-                updateCloudBadge(true, "Live Sync");
+                updateCloudBadge(true, "Mod Awan");
                 setupRealtimeListeners();
             } catch (err) {
                 console.error("Realtime connection error:", err);
@@ -1048,43 +1018,45 @@
         }
 
         function setupRealtimeListeners() {
-            if (!db || !currentUser) return;
+            if (!rtdb) return;
 
-            // Listen to Items collection
-            const itemsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
-            onSnapshot(itemsColRef, async (snapshot) => {
-                if (snapshot.empty) {
-                    await seedInitialCloudData(itemsColRef);
+            const itemsRef = ref(rtdb, 'items');
+            onValue(itemsRef, (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    seedInitialCloudData();
                     return;
                 }
                 items = [];
-                snapshot.forEach(docSnap => {
-                    items.push({ id: docSnap.id, ...docSnap.data() });
+                Object.keys(data).forEach(key => {
+                    items.push({ id: key, ...data[key] });
                 });
                 updateAllViews();
             }, (err) => {
-                console.error("Items realtime error:", err);
+                console.error("Items RTDB error:", err);
             });
 
-            // Listen to Activity Logs collection
-            const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
-            onSnapshot(logsColRef, (snapshot) => {
+            const logsRef = ref(rtdb, 'logs');
+            onValue(logsRef, (snapshot) => {
+                const data = snapshot.val();
                 activityLogs = [];
-                snapshot.forEach(docSnap => {
-                    activityLogs.push({ id: docSnap.id, ...docSnap.data() });
-                });
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        activityLogs.push({ id: key, ...data[key] });
+                    });
+                }
                 activityLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                 renderActivityLogs();
             }, (err) => {
-                console.error("Logs realtime error:", err);
+                console.error("Logs RTDB error:", err);
             });
         }
 
-        async function seedInitialCloudData(itemsColRef) {
-            for (const item of SAMPLE_ITEMS) {
-                const docRef = doc(itemsColRef, item.id);
-                await setDoc(docRef, item);
-            }
+        function seedInitialCloudData() {
+            if (!rtdb) return;
+            SAMPLE_ITEMS.forEach(item => {
+                set(ref(rtdb, 'items/' + item.id), item);
+            });
         }
 
         function updateCloudBadge(isOnline, label) {
@@ -1114,7 +1086,7 @@
         }
 
         function saveDataLocal() {
-            if (!db) {
+            if (!rtdb) {
                 localStorage.setItem('royal_bakery_pro_items_v2', JSON.stringify(items));
                 localStorage.setItem('royal_bakery_pro_logs_v2', JSON.stringify(activityLogs));
             }
@@ -1291,15 +1263,13 @@
 
             const itemData = { sku, category, name, unit, date, currentStock, reorderPoint, parLevel, supplier };
 
-            if (db && currentUser) {
+            if (rtdb) {
                 if (editId) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', editId);
-                    await updateDoc(docRef, itemData);
+                    await update(ref(rtdb, 'items/' + editId), itemData);
                     showToast(`Bahan ${name} dikemas kini secara real-time!`, "success");
                 } else {
                     const newId = Date.now().toString();
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', newId);
-                    await setDoc(docRef, { id: newId, ...itemData });
+                    await set(ref(rtdb, 'items/' + newId), { id: newId, ...itemData });
                     showToast(`Bahan baharu ${name} ditambah ke awan!`, "success");
                 }
             } else {
@@ -1336,12 +1306,10 @@
                 user: 'Staf Royal Bakery'
             };
 
-            if (db && currentUser) {
-                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId);
-                await updateDoc(itemRef, { currentStock: newQty });
-
-                const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
-                await addDoc(logsColRef, logEntry);
+            if (rtdb) {
+                await update(ref(rtdb, 'items/' + itemId), { currentStock: newQty });
+                const newLogRef = push(ref(rtdb, 'logs'));
+                await set(newLogRef, logEntry);
             } else {
                 item.currentStock = newQty;
                 activityLogs.unshift({ id: 'log-' + Date.now(), ...logEntry });
@@ -1354,7 +1322,7 @@
             e.preventDefault();
             const itemId = document.getElementById('stock-in-item').value;
             const qty = parseFloat(document.getElementById('stock-in-qty').value) || 0;
-            const ref = document.getElementById('stock-in-supplier').value.trim() || 'Terima Serahan';
+            const refNote = document.getElementById('stock-in-supplier').value.trim() || 'Terima Serahan';
             const user = document.getElementById('stock-in-user').value.trim() || 'Staf';
 
             const item = items.find(i => i.id === itemId);
@@ -1368,16 +1336,14 @@
                 type: 'STOCK_IN',
                 itemName: item.name,
                 qty: `+${qty} ${item.unit}`,
-                reason: ref,
+                reason: refNote,
                 user: user
             };
 
-            if (db && currentUser) {
-                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId);
-                await updateDoc(itemRef, { currentStock: newStock });
-
-                const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
-                await addDoc(logsColRef, logEntry);
+            if (rtdb) {
+                await update(ref(rtdb, 'items/' + itemId), { currentStock: newStock });
+                const newLogRef = push(ref(rtdb, 'logs'));
+                await set(newLogRef, logEntry);
             } else {
                 item.currentStock = newStock;
                 activityLogs.unshift({ id: 'log-' + Date.now(), ...logEntry });
@@ -1411,12 +1377,10 @@
                 user: user
             };
 
-            if (db && currentUser) {
-                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId);
-                await updateDoc(itemRef, { currentStock: newStock });
-
-                const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
-                await addDoc(logsColRef, logEntry);
+            if (rtdb) {
+                await update(ref(rtdb, 'items/' + itemId), { currentStock: newStock });
+                const newLogRef = push(ref(rtdb, 'logs'));
+                await set(newLogRef, logEntry);
             } else {
                 item.currentStock = newStock;
                 activityLogs.unshift({ id: 'log-' + Date.now(), ...logEntry });
@@ -1433,9 +1397,8 @@
             if (!item) return;
 
             showConfirmModal("Padam Bahan Inventori", `Adakah anda pasti mahu memadam "${item.name}"?`, async () => {
-                if (db && currentUser) {
-                    const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', id);
-                    await deleteDoc(itemRef);
+                if (rtdb) {
+                    await remove(ref(rtdb, 'items/' + id));
                     showToast(`Bahan ${item.name} dipadam daripada awan.`, "info");
                 } else {
                     items = items.filter(i => i.id !== id);
@@ -1448,12 +1411,9 @@
 
         async function resetToSampleData() {
             showConfirmModal("Set Semula Data Inventori", "Adakah anda pasti mahu mengembalikan data sampel asal ke pangkalan data?", async () => {
-                if (db && currentUser) {
-                    for (const item of items) {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', item.id));
-                    }
-                    const itemsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
-                    await seedInitialCloudData(itemsColRef);
+                if (rtdb) {
+                    await remove(ref(rtdb, 'items'));
+                    seedInitialCloudData();
                 } else {
                     items = JSON.parse(JSON.stringify(SAMPLE_ITEMS));
                     activityLogs = [];
@@ -1919,12 +1879,8 @@
 
         async function clearActivityLogs() {
             showConfirmModal("Kosongkan Log Aktiviti", "Adakah anda pasti mahu memadam semua rekod log aktiviti stok?", async () => {
-                if (db && currentUser) {
-                    for (const log of activityLogs) {
-                        if (log.id) {
-                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', log.id));
-                        }
-                    }
+                if (rtdb) {
+                    await remove(ref(rtdb, 'logs'));
                 } else {
                     activityLogs = [];
                     saveDataLocal();
@@ -1949,8 +1905,8 @@
             const raw = document.getElementById('firebase-cfg-json').value.trim();
             try {
                 const parsed = JSON.parse(raw);
-                if (!parsed.projectId || !parsed.apiKey) {
-                    showToast("Pastikan JSON mengandungi sekurang-kurangnya apiKey & projectId!", "error");
+                if (!parsed.databaseURL || !parsed.apiKey) {
+                    showToast("Pastikan JSON mengandungi sekurang-kurangnya apiKey & databaseURL!", "error");
                     return;
                 }
                 localStorage.setItem('rb_user_firebase_cfg', JSON.stringify(parsed));
