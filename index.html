@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Bakery - Sistem Pengurusan Inventori (KV Sultan Abdul Samad)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        kvblue: '#0f172a',
+                        kvorange: '#e85527'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #f8fafc;
+            color: #0f172a;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .pro-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+            transition: all 0.2s ease-in-out;
+        }
+        .pro-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .pro-table-header {
+            background-color: #f1f5f9;
+            color: #475569;
+            text-transform: uppercase;
+            font-size: 0.70rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* Excel Sheet Specific Styling */
+        .excel-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+        }
+        .excel-table th, .excel-table td {
+            border-right: 1px solid #cbd5e1;
+            border-bottom: 1px solid #cbd5e1;
+            padding: 6px 10px;
+        }
+        .excel-table th {
+            background-color: #e2e8f0;
+            color: #334155;
+            font-weight: 700;
+            text-align: center;
+            user-select: none;
+        }
+        .excel-table tr:hover td {
+            background-color: #f0fdf4 !important;
+        }
+        .excel-header-row {
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+        .excel-row-num {
+            background-color: #cbd5e1;
+            color: #475569;
+            font-weight: bold;
+            text-align: center;
+            width: 38px;
+            user-select: none;
+        }
+
+        /* Custom Scrollbar for tables */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #modal-excel, #modal-excel *, #po-printable-area, #po-printable-area * {
+                visibility: visible;
+            }
+            #modal-excel, #modal-po {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased bg-slate-50">
+
+    <!-- Top Corporate Header -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20 py-2">
+                <!-- KV Sultan Abdul Samad & Royal Bakery Brand Header -->
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <!-- KV Logo Emblem -->
+                    <div class="flex items-center space-x-2.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700/60">
+                        <svg class="h-9 w-auto" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 15 H32 V105 H12 Z" fill="#ffffff"/>
+                            <path d="M32 60 L68 15 H92 L52 60 L92 105 H68 Z" fill="#3b82f6"/>
+                            <path d="M50 70 L75 102 L145 20 H120 L75 76 L58 55 Z" fill="#e85527"/>
+                            <path d="M100 105 L145 45 H120 L90 85 Z" fill="#ef4444"/>
+                        </svg>
+                        <div class="hidden md:block text-left border-l border-slate-700 pl-2.5">
+                            <p class="text-[10px] font-extrabold tracking-wider uppercase leading-none text-slate-300">Kolej Vokasional</p>
+                            <p class="text-[8px] font-medium text-slate-400 uppercase leading-tight mt-0.5">Kementerian Pendidikan Malaysia</p>
+                            <p class="text-[9px] font-bold text-blue-400 uppercase leading-none mt-0.5">Sultan Abdul Samad</p>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="h-8 w-px bg-slate-800 hidden sm:block"></div>
+
+                    <!-- Royal Bakery Branding -->
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-inner font-bold text-lg border border-blue-500">
+                            <i class="fa-solid fa-crown text-amber-300 text-base"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white font-sans">Royal Bakery</h1>
+                            </div>
+                            <p class="text-xs text-slate-400 font-medium">Sistem Pengurusan Inventori & Stok Professional</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button Cluster -->
+                <div class="flex items-center space-x-2">
+                    <!-- Firebase Cloud Sync Status Indicator -->
+                    <button onclick="openConfigModal()" id="cloud-status-btn" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 flex items-center space-x-2 transition" title="Tetapan Firebase Cloud Sync">
+                        <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                        <span id="sync-label" class="hidden md:inline font-mono font-medium">Awan / Lokal</span>
+                    </button>
+
+                    <!-- EXCEL VIEW BUTTON -->
+                    <button onclick="openExcelModal()" class="px-3 py-2 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition flex items-center space-x-1.5 ring-2 ring-emerald-500/50">
+                        <i class="fa-solid fa-file-excel text-base"></i>
+                        <span class="hidden sm:inline">Paparan Excel Simple</span>
+                    </button>
+
+                    <button onclick="openStockInModal()" class="px-3 py-2 text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span class="hidden sm:inline">Terima Stok</span>
+                    </button>
+                    <button onclick="openStockOutModal()" class="px-3 py-2 text-xs sm:text-sm bg-rose-600 hover:bg-rose-700 text-white font-medium rounded-lg shadow-sm transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-minus-circle"></i>
+                        <span class="hidden sm:inline">Guna / Sisa</span>
+                    </button>
+                    <button onclick="openAddItemModal()" class="px-3 py-2 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm transition flex items-center space-x-1.5 border border-slate-700">
+                        <i class="fa-solid fa-box"></i>
+                        <span class="hidden md:inline">Item Baharu</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Navigation Bar -->
+    <nav class="bg-white border-b border-slate-200 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div class="flex space-x-1 sm:space-x-6 overflow-x-auto py-1 no-scrollbar">
+                    <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn px-3 py-3 text-xs sm:text-sm font-bold border-b-2 border-blue-600 text-blue-700 flex items-center space-x-2 whitespace-nowrap">
+                        <i class="fa-solid fa-chart-line text-blue-600"></i>
+                        <span>Papan Pemuka</span>
+                    </button>
+                    <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-3 py-3 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap">
+                        <i class="fa-solid fa-boxes-stacked"></i>
+                        <span>Inventori Utama</span>
+                    </button>
+                    <button onclick="switchTab('reorders')" id="tab-reorders" class="tab-btn px-3 py-3 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap relative">
+                        <i class="fa-solid fa-cart-flatbed"></i>
+                        <span>Senarai Pesan Semula</span>
+                        <span id="reorder-badge" class="ml-1.5 px-1.5 py-0.5 text-[10px] font-bold bg-amber-500 text-white rounded-full hidden">0</span>
+                    </button>
+                    <button onclick="switchTab('history')" id="tab-history" class="tab-btn px-3 py-3 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 flex items-center space-x-2 whitespace-nowrap">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Log Aktiviti</span>
+                    </button>
+                </div>
+
+                <!-- Export & Quick Stats Indicator -->
+                <div class="hidden lg:flex items-center space-x-2 text-xs text-slate-500 border-l border-slate-200 pl-4 py-1">
+                    <button onclick="openExcelModal()" class="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded font-bold flex items-center space-x-1.5">
+                        <i class="fa-solid fa-table-cells text-emerald-600"></i>
+                        <span>Ringkasan Excel</span>
+                    </button>
+                    <button onclick="exportCSVData()" class="px-2.5 py-1.5 border border-slate-300 rounded hover:bg-slate-50 font-semibold text-slate-700 flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-csv text-emerald-600"></i>
+                        <span>Muat Turun CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- Main Workspace Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ==================== TAB 1: DASHBOARD ==================== -->
+        <section id="view-dashboard" class="space-y-6">
+            <!-- KPI Metric Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                
+                <!-- Total Items Count Card -->
+                <div class="pro-card p-5 border-l-4 border-l-blue-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Jumlah Jenis Bahan (SKU)</p>
+                            <h3 id="kpi-total-skus" class="text-2xl font-extrabold text-slate-900 mt-1">0 Bahan</h3>
+                            <p class="text-xs text-slate-500 font-medium mt-1 flex items-center">
+                                Aktif berdaftar dalam inventori
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center text-xl font-bold border border-blue-100">
+                            <i class="fa-solid fa-boxes-stacked"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Low Stock Card -->
+                <div class="pro-card p-5 border-l-4 border-l-amber-500">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Amaran Pesan Semula</p>
+                            <h3 id="kpi-low-stock" class="text-2xl font-extrabold text-amber-600 mt-1">0</h3>
+                            <p class="text-xs text-amber-700 font-medium mt-1">
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i>Di bawah paras Minimum
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center text-xl font-bold border border-amber-100">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Out of Stock Card -->
+                <div class="pro-card p-5 border-l-4 border-l-rose-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kehabisan Stok</p>
+                            <h3 id="kpi-out-stock" class="text-2xl font-extrabold text-rose-600 mt-1">0</h3>
+                            <p class="text-xs text-rose-700 font-medium mt-1">
+                                <i class="fa-solid fa-circle-exclamation mr-1"></i>Perlu tindak balas segera
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-xl font-bold border border-rose-100">
+                            <i class="fa-solid fa-ban"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stock Health Index Card -->
+                <div class="pro-card p-5 border-l-4 border-l-emerald-600">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kesihatan Stok Inventori</p>
+                            <h3 id="kpi-health-pct" class="text-2xl font-extrabold text-emerald-700 mt-1">0%</h3>
+                            <p class="text-xs text-emerald-700 font-medium mt-1">
+                                <i class="fa-solid fa-shield-halved mr-1"></i>Paras optimum
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-xl font-bold border border-emerald-100">
+                            <i class="fa-solid fa-square-poll-vertical"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Critical Alerts Panel -->
+                <div class="lg:col-span-2 pro-card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-500"></i>
+                                <span>Status Amaran Pesan Semula & Kehabisan Stok</span>
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-0.5">Item yang memerlukan pesanan semula daripada pembekal</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="openExcelModal()" class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-300 px-2.5 py-1 rounded font-bold hover:bg-emerald-100 flex items-center space-x-1">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Lihat dalam Excel</span>
+                            </button>
+                            <button onclick="switchTab('reorders')" class="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center space-x-1">
+                                <span>Senarai Pembekal</span>
+                                <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="pro-table-header border-b border-slate-200">
+                                    <th class="py-2.5 px-3">Nama Bahan / Kod Bahan</th>
+                                    <th class="py-2.5 px-3">Kategori</th>
+                                    <th class="py-2.5 px-3">Semasa</th>
+                                    <th class="py-2.5 px-3">Minimum</th>
+                                    <th class="py-2.5 px-3">Tarikh</th>
+                                    <th class="py-2.5 px-3 text-right">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-alert-table" class="divide-y divide-slate-100 text-xs">
+                                <!-- Dynamic Low Stock Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Category Stock Distribution Breakdown -->
+                <div class="pro-card p-5 flex flex-col justify-between">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 mb-1 flex items-center space-x-2">
+                            <i class="fa-solid fa-pie-chart text-slate-700"></i>
+                            <span>Pecahan Inventori Mengikut Kategori</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mb-4">Jumlah Jenis Bahan & nisbah peratusan</p>
+
+                        <div id="category-breakdown-list" class="space-y-3.5">
+                            <!-- Dynamic category bars -->
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
+                        <span>Royal Bakery - KVSAS</span>
+                        <button onclick="resetToSampleData()" class="text-blue-600 hover:underline font-semibold">Set Semula Data Sampel</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 2: MASTER INVENTORY ==================== -->
+        <section id="view-inventory" class="hidden space-y-4">
+            <!-- Filter & Search Toolbar -->
+            <div class="pro-card p-4 flex flex-col md:flex-row gap-3 justify-between items-center">
+                <!-- Search Box -->
+                <div class="relative w-full md:w-80">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="inv-search" oninput="renderMasterInventory()" placeholder="Cari nama bahan, Kod Bahan, atau pembekal..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-600">
+                </div>
+
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto justify-end">
+                    <!-- Excel Quick Button -->
+                    <button onclick="openExcelModal()" class="px-3 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Paparan Excel</span>
+                    </button>
+
+                    <!-- Category Filter -->
+                    <select id="inv-filter-cat" onchange="renderMasterInventory()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                        <option value="ALL">Semua Kategori</option>
+                        <option value="Bahan Mentah">Bahan Mentah</option>
+                        <option value="Tenusu & Sejuk">Tenusu & Sejuk</option>
+                        <option value="Pembungkusan">Pembungkusan</option>
+                        <option value="Barangan Siap">Barangan Siap</option>
+                    </select>
+
+                    <!-- Status Filter -->
+                    <select id="inv-filter-status" onchange="renderMasterInventory()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                        <option value="ALL">Semua Status</option>
+                        <option value="OK">Ada Stok (OK)</option>
+                        <option value="REORDER">Perlu Pesan Semula</option>
+                        <option value="OUT">Kehabisan Stok</option>
+                    </select>
+
+                    <!-- Reset Filters -->
+                    <button onclick="resetInventoryFilters()" class="px-3 py-2 text-slate-600 hover:text-slate-900 text-xs font-semibold rounded-lg border border-slate-300 hover:bg-slate-100 transition" title="Set semula tapisan">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Master Inventory Table -->
+            <div class="pro-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="pro-table-header border-b border-slate-200">
+                                <th class="py-3 px-4">Kod Bahan / Nama Bahan</th>
+                                <th class="py-3 px-4">Kategori</th>
+                                <th class="py-3 px-4">Tarikh</th>
+                                <th class="py-3 px-4">Stok Semasa</th>
+                                <th class="py-3 px-4">Stok Min / Max</th>
+                                <th class="py-3 px-4">Pembekal</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body" class="divide-y divide-slate-200 text-xs">
+                            <!-- Dynamic Inventory Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 3: REORDER LIST ==================== -->
+        <section id="view-reorders" class="hidden space-y-4">
+            <div class="pro-card p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-l-4 border-l-amber-500">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Pembantu Pesanan Pembekal Royal Bakery</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Senarai item di bawah paras minimum. Cadangan kuantiti dikira daripada Stok Maksimum tolak stok semasa.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="openExcelModal()" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Lembaran Excel</span>
+                    </button>
+                    <button onclick="openPOModal()" class="px-3.5 py-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center space-x-2">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>Jana Borang Pesanan (PO)</span>
+                    </button>
+                    <button onclick="copyReorderListToClipboard()" class="px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Salin Teks Pesanan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reorder Summary Metrics -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="pro-card p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Item Perlu Dipesan</p>
+                    <h4 id="reorder-summary-count" class="text-xl font-extrabold text-amber-600 mt-1">0 Item</h4>
+                </div>
+                <div class="pro-card p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase">Jumlah Jenis Kategori Perlu Pesan</p>
+                    <h4 id="reorder-summary-cats" class="text-xl font-extrabold text-slate-900 mt-1">0 Kategori</h4>
+                </div>
+                <div class="pro-card p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase">Status Keutamaan</p>
+                    <h4 id="reorder-summary-priority" class="text-xl font-extrabold text-blue-700 mt-1">Normal</h4>
+                </div>
+            </div>
+
+            <!-- Reorder Items Table -->
+            <div class="pro-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="pro-table-header border-b border-slate-200">
+                                <th class="py-3 px-4">Kod Bahan & Nama Bahan</th>
+                                <th class="py-3 px-4">Kategori</th>
+                                <th class="py-3 px-4">Pembekal</th>
+                                <th class="py-3 px-4">Stok Semasa</th>
+                                <th class="py-3 px-4">Stok Maksimum</th>
+                                <th class="py-3 px-4">Cadangan Pesanan</th>
+                                <th class="py-3 px-4">Tarikh Catatan</th>
+                                <th class="py-3 px-4 text-right">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reorder-table-body" class="divide-y divide-slate-200 text-xs">
+                            <!-- Dynamic Reorder List Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== TAB 4: ACTIVITY LOGS ==================== -->
+        <section id="view-history" class="hidden space-y-4">
+            <div class="pro-card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900">Sejarah & Log Transaksi Stok</h2>
+                    <p class="text-xs text-slate-500">Rekod lengkap pergerakan stok masuk dan keluar</p>
+                </div>
+
+                <!-- Log Filtering Toolbar -->
+                <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    <!-- Search Input -->
+                    <div class="relative flex-grow md:w-48">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                        <input type="text" id="log-search" oninput="renderActivityLogs()" placeholder="Cari nama, staf, nota..." class="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+
+                    <!-- Time Period Dropdown (Harian, Mingguan, Bulanan) -->
+                    <select id="log-filter-period" onchange="renderActivityLogs()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold">
+                        <option value="ALL">Semua Masa</option>
+                        <option value="TODAY">Harian (Hari Ini)</option>
+                        <option value="THIS_WEEK">Minggu Ini</option>
+                        <option value="WEEK1">Minggu 1 (1–7 hb)</option>
+                        <option value="WEEK2">Minggu 2 (8–14 hb)</option>
+                        <option value="WEEK3">Minggu 3 (15–21 hb)</option>
+                        <option value="WEEK4">Minggu 4 (22–31 hb)</option>
+                        <option value="THIS_MONTH">Bulan Ini</option>
+                    </select>
+
+                    <!-- Transaction Type Dropdown -->
+                    <select id="log-filter-type" onchange="renderActivityLogs()" class="bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-600 font-semibold">
+                        <option value="ALL">Semua Pergerakan</option>
+                        <option value="STOCK_IN">Terima Stok (Masuk)</option>
+                        <option value="STOCK_OUT">Guna / Sisa (Keluar)</option>
+                    </select>
+
+                    <!-- Clear Button -->
+                    <button onclick="clearActivityLogs()" class="text-xs text-rose-700 hover:text-rose-900 font-semibold px-2.5 py-1.5 border border-rose-300 rounded-lg hover:bg-rose-50 transition" title="Kosongkan Log">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="pro-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="pro-table-header border-b border-slate-200">
+                                <th class="py-3 px-4">Masa / Tarikh</th>
+                                <th class="py-3 px-4">Jenis Pergerakan</th>
+                                <th class="py-3 px-4">Nama Item</th>
+                                <th class="py-3 px-4">Perubahan Qty</th>
+                                <th class="py-3 px-4">Sebab / Pembekal</th>
+                                <th class="py-3 px-4">Direkod Oleh</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body" class="divide-y divide-slate-200 text-xs">
+                            <!-- Dynamic Logs Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== EXCEL SIMPLE VIEW MODAL ==================== -->
+    <div id="modal-excel" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center hidden p-2 sm:p-4">
+        <div class="bg-white w-full max-w-6xl rounded-xl shadow-2xl border border-slate-300 overflow-hidden flex flex-col max-h-[94vh]">
+            
+            <!-- Excel Top Bar Header -->
+            <div class="px-5 py-3.5 bg-emerald-800 text-white flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-emerald-900 shrink-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 bg-emerald-600 rounded-lg flex items-center justify-center text-white font-black text-lg border border-emerald-400 shadow-inner">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <h3 class="font-bold text-sm uppercase tracking-wide text-white">Paparan Lembaran Kerja Excel Simple</h3>
+                            <span class="bg-emerald-900 text-emerald-200 border border-emerald-700 text-[10px] font-mono px-2 py-0.5 rounded font-bold">.XLSX GRID VIEW</span>
+                        </div>
+                        <p class="text-[11px] text-emerald-100">Ringkasan cepat data inventori Royal Bakery dalam format jadual Excel</p>
+                    </div>
+                </div>
+
+                <!-- Excel Modal Action Tools -->
+                <div class="flex items-center space-x-2 no-print self-end sm:self-auto">
+                    <button onclick="copyExcelFormatToClipboard()" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded shadow-xs transition flex items-center space-x-1.5 border border-emerald-500" title="Salin jadual dalam format bersesuaian dengan MS Excel / Google Sheets">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>Salin Format Excel</span>
+                    </button>
+                    <button onclick="exportCSVData()" class="px-3 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 text-xs font-bold rounded shadow-xs transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Muat Turun .CSV</span>
+                    </button>
+                    <button onclick="printExcelSheet()" class="px-3 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded shadow-xs transition flex items-center space-x-1.5 border border-slate-700">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Cetak</span>
+                    </button>
+                    <button onclick="closeModal('modal-excel')" class="w-8 h-8 rounded-lg bg-emerald-900/60 hover:bg-emerald-900 text-emerald-100 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Excel Formula Bar & Search -->
+            <div class="px-4 py-2 bg-slate-100 border-b border-slate-300 flex items-center space-x-3 text-xs font-mono no-print">
+                <span class="font-bold text-slate-500 uppercase tracking-tight text-[11px] bg-slate-200 px-2 py-0.5 rounded border border-slate-300">fx Formula</span>
+                <span id="excel-formula-display" class="text-slate-700 bg-white px-3 py-1 rounded border border-slate-300 flex-grow font-semibold truncate">
+                    =SUM(A2:H10) &bull; Ringkasan Inventori
+                </span>
+                
+                <div class="relative w-52 sm:w-64 shrink-0">
+                    <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                    <input type="text" id="excel-search" oninput="renderExcelTable()" placeholder="Cari dalam Excel..." class="w-full pl-7 pr-3 py-1 bg-white border border-slate-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600 font-sans">
+                </div>
+            </div>
+
+            <!-- Excel Table Workspace -->
+            <div class="p-4 overflow-auto flex-grow bg-slate-200">
+                <div class="bg-white border border-slate-300 shadow-sm rounded overflow-hidden">
+                    <table class="excel-table w-full text-left">
+                        <thead>
+                            <!-- Column Letters Bar (A, B, C, D, E...) -->
+                            <tr class="excel-header-row">
+                                <th class="excel-row-num">#</th>
+                                <th>A <span class="text-[9px] font-normal text-slate-500 block">KOD</span></th>
+                                <th>B <span class="text-[9px] font-normal text-slate-500 block">NAMA BAHAN</span></th>
+                                <th>C <span class="text-[9px] font-normal text-slate-500 block">KATEGORI</span></th>
+                                <th>D <span class="text-[9px] font-normal text-slate-500 block">STOK SEMASA</span></th>
+                                <th>E <span class="text-[9px] font-normal text-slate-500 block">UNIT</span></th>
+                                <th>F <span class="text-[9px] font-normal text-slate-500 block">STATUS</span></th>
+                                <th>G <span class="text-[9px] font-normal text-slate-500 block">PEMBEKAL</span></th>
+                                <th>H <span class="text-[9px] font-normal text-slate-500 block">TARIKH</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="excel-table-body">
+                            <!-- Dynamic Excel Spreadsheet Rows -->
+                        </tbody>
+                        <tfoot id="excel-table-foot" class="bg-emerald-50 border-t-2 border-emerald-600 font-bold text-slate-900">
+                            <!-- Excel Summary Formulas Footer -->
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Excel Bottom Status Bar -->
+            <div class="px-5 py-2 bg-slate-900 text-slate-300 text-xs flex justify-between items-center border-t border-slate-800 font-mono no-print">
+                <div class="flex items-center space-x-4 text-[11px]">
+                    <span class="flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                        <span>STATUS: LEMBARAN TERSEDIA</span>
+                    </span>
+                    <span class="hidden sm:inline text-slate-500">|</span>
+                    <span id="excel-stat-count" class="hidden sm:inline">JUMLAH BARIS: 0</span>
+                </div>
+                <div class="flex items-center space-x-4 text-[11px]">
+                    <span id="excel-stat-sum">JUMLAH UNIT: 0</span>
+                    <span class="text-slate-500">|</span>
+                    <span class="text-emerald-400 font-bold">100% EXCEL FORMAT</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL: Add / Edit Item -->
+    <div id="modal-item" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-slate-300 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <h3 id="modal-item-title" class="font-bold text-sm uppercase tracking-wider text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-box text-blue-400"></i>
+                    <span>Tambah Bahan Baharu Royal Bakery</span>
+                </h3>
+                <button onclick="closeModal('modal-item')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-item" onsubmit="handleSaveItem(event)" class="p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" id="item-edit-id">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kod Bahan</label>
+                        <input type="text" id="item-sku" required placeholder="BHN-001" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kategori</label>
+                        <select id="item-category" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                            <option value="Bahan Mentah">Bahan Mentah</option>
+                            <option value="Tenusu & Sejuk">Tenusu & Sejuk</option>
+                            <option value="Pembungkusan">Pembungkusan</option>
+                            <option value="Barangan Siap">Barangan Siap</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Bahan</label>
+                    <input type="text" id="item-name" required placeholder="Tepung Gandum Roti Premium" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Unit Ukuran</label>
+                        <input type="text" id="item-unit" required placeholder="kg, beg, pek, liter" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Tarikh (Diterima / Luput)</label>
+                        <input type="date" id="item-date" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-semibold">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 pt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Stok Semasa</label>
+                        <input type="number" step="0.1" id="item-stock" required placeholder="10" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Stok Minimum</label>
+                        <input type="number" step="0.1" id="item-reorder" required placeholder="3" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Stok Maksimum</label>
+                        <input type="number" step="0.1" id="item-par" required placeholder="15" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pembekal Pilihan</label>
+                    <input type="text" id="item-supplier" placeholder="Pembekal Bahan Baki Sdn Bhd" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3 border-t border-slate-200">
+                    <button type="button" onclick="closeModal('modal-item')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-xs font-bold shadow-xs">Simpan Bahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Stock In (Receive Deliveries) -->
+    <div id="modal-stock-in" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl border border-slate-300 overflow-hidden">
+            <div class="px-6 py-4 bg-emerald-700 text-white flex justify-between items-center">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-emerald-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-boxes-packing text-emerald-300"></i>
+                    <span>Terima Serahan Stok (Stok Masuk)</span>
+                </h3>
+                <button onclick="closeModal('modal-stock-in')" class="text-emerald-200 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-stock-in" onsubmit="handleStockIn(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Item</label>
+                    <select id="stock-in-item" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                        <!-- Dynamic item options -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kuantiti Diterima</label>
+                        <input type="number" step="0.01" id="stock-in-qty" required placeholder="0.0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Rujukan / Nota Serahan</label>
+                        <input type="text" id="stock-in-supplier" placeholder="DO #88412" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Direkod Oleh Staff</label>
+                    <input type="text" id="stock-in-user" required placeholder="Fatin / Tukang Roti" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-stock-in')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-xs">Sahkan Stok Masuk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Stock Out (Production / Spoilage / Waste) -->
+    <div id="modal-stock-out" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-md rounded-xl shadow-2xl border border-slate-300 overflow-hidden">
+            <div class="px-6 py-4 bg-rose-700 text-white flex justify-between items-center">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-rose-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-minus-circle text-rose-300"></i>
+                    <span>Log Pengurangan Stok / Sisa</span>
+                </h3>
+                <button onclick="closeModal('modal-stock-out')" class="text-rose-200 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="form-stock-out" onsubmit="handleStockOut(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Item</label>
+                    <select id="stock-out-item" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-rose-600 focus:outline-none">
+                        <!-- Dynamic item options -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Kuantiti Diguna / Sisa</label>
+                        <input type="number" step="0.01" id="stock-out-qty" required placeholder="0.0" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-rose-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">Sebab Pengurangan</label>
+                        <select id="stock-out-reason" required class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-rose-600 focus:outline-none">
+                            <option value="Pengeluaran Harian">Pengeluaran Harian</option>
+                            <option value="Tamat Tempoh / Rosak">Tamat Tempoh / Rosak</option>
+                            <option value="Hangus / Cacat">Hangus / Cacat</option>
+                            <option value="Pembungkusan Rosak">Pembungkusan Rosak</option>
+                            <option value="Sampel / Ujian Resipi">Sampel / Ujian Resipi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Direkod Oleh Staff</label>
+                    <input type="text" id="stock-out-user" required placeholder="Fatin / Chef Pastri" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-rose-600 focus:outline-none">
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-stock-out')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100">Batal</button>
+                    <button type="submit" class="px-5 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-bold shadow-xs">Tolak Stok</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Purchase Order PO Preview -->
+    <div id="modal-po" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-2xl rounded-xl shadow-2xl border border-slate-300 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-xs uppercase tracking-wider text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-file-invoice text-blue-400"></i>
+                    <span>Borang Pesanan Pembelian (Purchase Order)</span>
+                </h3>
+                <button onclick="closeModal('modal-po')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <!-- Printable PO Sheet Area -->
+                <div id="po-printable-area" class="border border-slate-300 rounded-lg p-6 bg-white space-y-4 font-sans text-xs">
+                    <div class="flex justify-between items-start border-b border-slate-200 pb-4">
+                        <div>
+                            <h2 class="text-lg font-extrabold text-slate-900 uppercase tracking-tight">BORANG PESANAN PEMBELIAN (PO)</h2>
+                            <p class="font-bold text-blue-800">KOLEJ VOKASIONAL SULTAN ABDUL SAMAD</p>
+                            <p class="text-slate-500">Royal Bakery KVSAS - Unit Vokasional Pastri</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-slate-800">No. PO: <span class="font-mono text-blue-700" id="po-number">PO-2026-001</span></p>
+                            <p class="text-slate-500">Tarikh: <span id="po-date">-</span></p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <p class="font-bold text-slate-800 uppercase">Senarai Item Pesanan Pembekal:</p>
+                        <table class="w-full text-left border-collapse border border-slate-300">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-300">
+                                    <th class="p-2 border-r border-slate-300">Kod Bahan</th>
+                                    <th class="p-2 border-r border-slate-300">Item</th>
+                                    <th class="p-2 border-r border-slate-300">Pembekal</th>
+                                    <th class="p-2 border-r border-slate-300 text-center">Qty Pesan</th>
+                                    <th class="p-2 text-center">Tarikh Rekod</th>
+                                </tr>
+                            </thead>
+                            <tbody id="po-items-table" class="divide-y divide-slate-200">
+                                <!-- Dynamic PO rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 flex justify-between items-end text-[10px] text-slate-500">
+                        <div>
+                            <p class="font-bold text-slate-700">Disediakan Oleh:</p>
+                            <p class="mt-8 border-t border-slate-300 pt-1 w-36 font-semibold">Pengurus Royal Bakery KVSAS</p>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-700">Disahkan Oleh:</p>
+                            <p class="mt-8 border-t border-slate-300 pt-1 w-36 font-semibold">Ketua Jabatan / KPM</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button onclick="closeModal('modal-po')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100">Tutup</button>
+                    <button onclick="printPO()" class="px-5 py-2 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold shadow-xs flex items-center space-x-1.5">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Cetak Borang PO</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Firebase Realtime Cloud Setup -->
+    <div id="modal-config" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-slate-300 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
+                <h3 class="font-bold text-sm uppercase tracking-wider text-slate-100 flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud text-blue-400"></i>
+                    <span>Tetapan Firebase Real-Time Cloud (GitHub Pages)</span>
+                </h3>
+                <button onclick="closeModal('modal-config')" class="text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto text-xs">
+                <p class="text-slate-600">
+                    Masukkan konfigurasi Firebase anda di bawah supaya semua pengguna di <strong>GitHub Pages</strong> boleh melihat dan mengemaskini stok secara <strong>Real-Time</strong> serentak.
+                </p>
+
+                <div class="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-[11px] space-y-1">
+                    <p class="font-bold flex items-center"><i class="fa-solid fa-circle-info mr-1.5"></i> Nota Luar Talian:</p>
+                    <p>Jika tiada Firebase dimasukkan, sistem akan menggunakan mod simpanan tempatan (<code class="font-mono bg-amber-100 px-1 rounded">localStorage</code>).</p>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Firebase Config JSON Object</label>
+                    <textarea id="firebase-cfg-json" rows="6" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "your-app.firebaseapp.com",
+  "projectId": "your-app",
+  "storageBucket": "your-app.appspot.com",
+  "messagingSenderId": "123456...",
+  "appId": "1:123456...:web:abc..."
+}' class="w-full p-2.5 border border-slate-300 rounded-lg font-mono text-[11px] focus:ring-2 focus:ring-blue-600 focus:outline-none"></textarea>
+                </div>
+
+                <div class="pt-2 flex justify-between items-center">
+                    <button onclick="clearFirebaseConfig()" class="text-rose-600 hover:underline font-semibold">Padam Kunci & Guna Mod Lokal</button>
+                    <div class="space-x-2">
+                        <button onclick="closeModal('modal-config')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-bold hover:bg-slate-100">Tutup</button>
+                        <button onclick="saveFirebaseConfig()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-xs">Simpan Kunci Cloud</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Confirm Action Dialog -->
+    <div id="modal-confirm" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-sm rounded-xl shadow-2xl p-6 text-center space-y-4 border border-slate-300">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 id="confirm-title" class="font-bold text-slate-900 text-base">Adakah anda pasti?</h3>
+            <p id="confirm-message" class="text-xs text-slate-500">Tindakan ini tidak boleh dibatalkan.</p>
+            <div class="flex justify-center space-x-3 pt-2">
+                <button onclick="closeModal('modal-confirm')" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100">Batal</button>
+                <button id="confirm-action-btn" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-xs">Sahkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic with Real-time Cloud Sync & Github Pages Support -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Application Config
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'royal-bakery-kvsas';
+
+        // Read configuration from environment OR saved user settings in localStorage
+        let activeFirebaseConfig = null;
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try { activeFirebaseConfig = JSON.parse(__firebase_config); } catch(e) {}
+        }
+        if (!activeFirebaseConfig) {
+            const savedCfg = localStorage.getItem('rb_user_firebase_cfg');
+            if (savedCfg) {
+                try { activeFirebaseConfig = JSON.parse(savedCfg); } catch(e) {}
+            }
+        }
+
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        // Sample Default Items
+        const SAMPLE_ITEMS = [
+            { id: "1", sku: "BHN-001", name: "Tepung Gandum Roti Premium", category: "Bahan Mentah", unit: "beg 25kg", date: "2026-10-15", currentStock: 2, reorderPoint: 3, parLevel: 8, supplier: "Pembekal Tepung Malaya Sdn Bhd" },
+            { id: "2", sku: "BHN-002", name: "Tepung Kek & Pastri Superfine", category: "Bahan Mentah", unit: "beg 10kg", date: "2026-11-20", currentStock: 5, reorderPoint: 2, parLevel: 6, supplier: "Pembekal Tepung Malaya Sdn Bhd" },
+            { id: "3", sku: "TNS-001", name: "Mentega Tanpa Garam Anchor", category: "Tenusu & Sejuk", unit: "kg", date: "2026-12-05", currentStock: 12, reorderPoint: 5, parLevel: 15, supplier: "Koperasi Dairy Fresh" },
+            { id: "4", sku: "TNS-002", name: "Telur Ayam Segar (Gred A)", category: "Tenusu & Sejuk", unit: "papan (30 biji)", date: "2026-10-10", currentStock: 1, reorderPoint: 3, parLevel: 10, supplier: "Ladang Telur Segar" },
+            { id: "5", sku: "BHN-003", name: "Gula Halus Kualiti Tinggi", category: "Bahan Mentah", unit: "beg 25kg", date: "2026-09-30", currentStock: 0, reorderPoint: 2, parLevel: 5, supplier: "Gula National Trading" },
+            { id: "6", sku: "BHN-004", name: "Ekstrak Vanila Pure Bourbon", category: "Bahan Mentah", unit: "botol 1 liter", date: "2027-01-15", currentStock: 2, reorderPoint: 1, parLevel: 3, supplier: "Rempah & Perasa Enterprise" },
+            { id: "7", sku: "PBK-001", name: "Kotak Kek Tetingkap 8 Inci", category: "Pembungkusan", unit: "pek (50 keping)", date: "2026-08-12", currentStock: 1, reorderPoint: 2, parLevel: 6, supplier: "Pembungkusan Eco Pack" },
+            { id: "8", sku: "PBK-002", name: "Beg Kertas Pastri Kraft", category: "Pembungkusan", unit: "pek (100 keping)", date: "2026-08-20", currentStock: 8, reorderPoint: 3, parLevel: 10, supplier: "Pembungkusan Eco Pack" },
+            { id: "9", sku: "BRG-001", name: "Croissant Mentega Royal", category: "Barangan Siap", unit: "dulang (12 biji)", date: "2026-10-06", currentStock: 4, reorderPoint: 2, parLevel: 8, supplier: "Dapur Utama Royal Bakery KVSAS" }
+        ];
+
+        // State Variables
+        let items = [];
+        let activityLogs = [];
+
+        window.onload = async function() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('item-date');
+            if (dateInput) dateInput.value = today;
+
+            if (activeFirebaseConfig) {
+                await initRealtimeBackend(activeFirebaseConfig);
+            } else {
+                updateCloudBadge(false, "Mod Lokal");
+                loadLocalFallbackData();
+                updateAllViews();
+            }
+        };
+
+        async function initRealtimeBackend(config) {
+            try {
+                const app = initializeApp(config);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const userCred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = userCred.user;
+                } else {
+                    const userCred = await signInAnonymously(auth);
+                    currentUser = userCred.user;
+                }
+
+                updateCloudBadge(true, "Live Sync");
+                setupRealtimeListeners();
+            } catch (err) {
+                console.error("Realtime connection error:", err);
+                updateCloudBadge(false, "Offline / Ralat");
+                loadLocalFallbackData();
+                updateAllViews();
+            }
+        }
+
+        function setupRealtimeListeners() {
+            if (!db || !currentUser) return;
+
+            // Listen to Items collection
+            const itemsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
+            onSnapshot(itemsColRef, async (snapshot) => {
+                if (snapshot.empty) {
+                    await seedInitialCloudData(itemsColRef);
+                    return;
+                }
+                items = [];
+                snapshot.forEach(docSnap => {
+                    items.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                updateAllViews();
+            }, (err) => {
+                console.error("Items realtime error:", err);
+            });
+
+            // Listen to Activity Logs collection
+            const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
+            onSnapshot(logsColRef, (snapshot) => {
+                activityLogs = [];
+                snapshot.forEach(docSnap => {
+                    activityLogs.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                activityLogs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                renderActivityLogs();
+            }, (err) => {
+                console.error("Logs realtime error:", err);
+            });
+        }
+
+        async function seedInitialCloudData(itemsColRef) {
+            for (const item of SAMPLE_ITEMS) {
+                const docRef = doc(itemsColRef, item.id);
+                await setDoc(docRef, item);
+            }
+        }
+
+        function updateCloudBadge(isOnline, label) {
+            const dot = document.getElementById('sync-dot');
+            const lbl = document.getElementById('sync-label');
+            if (dot && lbl) {
+                lbl.innerText = label;
+                if (isOnline) {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+                } else {
+                    dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+                }
+            }
+        }
+
+        function loadLocalFallbackData() {
+            const savedItems = localStorage.getItem('royal_bakery_pro_items_v2');
+            const savedLogs = localStorage.getItem('royal_bakery_pro_logs_v2');
+            if (savedItems) {
+                try { items = JSON.parse(savedItems); } catch(e) { items = [...SAMPLE_ITEMS]; }
+            } else {
+                items = [...SAMPLE_ITEMS];
+            }
+            if (savedLogs) {
+                try { activityLogs = JSON.parse(savedLogs); } catch(e) { activityLogs = []; }
+            }
+        }
+
+        function saveDataLocal() {
+            if (!db) {
+                localStorage.setItem('royal_bakery_pro_items_v2', JSON.stringify(items));
+                localStorage.setItem('royal_bakery_pro_logs_v2', JSON.stringify(activityLogs));
+            }
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['dashboard', 'inventory', 'reorders', 'history'];
+            tabs.forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tabName) {
+                    view.classList.remove('hidden');
+                    btn.classList.add('border-blue-600', 'text-blue-700', 'font-bold');
+                    btn.classList.remove('border-transparent', 'text-slate-600');
+                } else {
+                    view.classList.add('hidden');
+                    btn.classList.remove('border-blue-600', 'text-blue-700', 'font-bold');
+                    btn.classList.add('border-transparent', 'text-slate-600');
+                }
+            });
+        }
+
+        function updateAllViews() {
+            renderDashboard();
+            renderMasterInventory();
+            renderReorderList();
+            renderActivityLogs();
+            populateDropdowns();
+            updateReorderBadge();
+            renderExcelTable();
+        }
+
+        /* ==================== EXCEL VIEW FUNCTIONS ==================== */
+        function openExcelModal() {
+            renderExcelTable();
+            document.getElementById('modal-excel').classList.remove('hidden');
+        }
+
+        function renderExcelTable() {
+            const tbody = document.getElementById('excel-table-body');
+            const tfoot = document.getElementById('excel-table-foot');
+            if (!tbody) return;
+
+            const searchTerm = (document.getElementById('excel-search')?.value || '').toLowerCase();
+
+            const filtered = items.filter(i => {
+                return !searchTerm ||
+                    i.sku.toLowerCase().includes(searchTerm) ||
+                    i.name.toLowerCase().includes(searchTerm) ||
+                    i.category.toLowerCase().includes(searchTerm) ||
+                    (i.supplier && i.supplier.toLowerCase().includes(searchTerm));
+            });
+
+            tbody.innerHTML = '';
+
+            let totalUnits = 0;
+            let criticalCount = 0;
+
+            filtered.forEach((item, index) => {
+                totalUnits += parseFloat(item.currentStock) || 0;
+                
+                let statusText = "OK";
+                let statusBg = "bg-emerald-100 text-emerald-800 font-bold";
+
+                if (item.currentStock <= 0) {
+                    statusText = "KEHABISAN";
+                    statusBg = "bg-rose-100 text-rose-800 font-bold";
+                    criticalCount++;
+                } else if (item.currentStock <= item.reorderPoint) {
+                    statusText = "PESAN SEMULA";
+                    statusBg = "bg-amber-100 text-amber-800 font-bold";
+                    criticalCount++;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="excel-row-num">${index + 1}</td>
+                        <td class="font-bold text-slate-800 bg-slate-50/50">${item.sku}</td>
+                        <td class="font-semibold text-slate-900">${item.name}</td>
+                        <td class="text-slate-600">${item.category}</td>
+                        <td class="text-right font-bold font-mono ${item.currentStock <= item.reorderPoint ? 'text-rose-600 bg-rose-50/40' : 'text-slate-800'}">${item.currentStock}</td>
+                        <td class="text-slate-500 text-center">${item.unit}</td>
+                        <td class="text-center"><span class="px-2 py-0.5 rounded text-[10px] ${statusBg}">${statusText}</span></td>
+                        <td class="text-slate-700">${item.supplier || '-'}</td>
+                        <td class="text-center font-mono text-slate-500">${item.date || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="p-8 text-center text-slate-400 font-sans italic bg-slate-50">
+                            Tiada rekod inventori dijumpai.
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="excel-row-num">=</td>
+                    <td colspan="2" class="font-mono text-emerald-900">
+                        =COUNTA(A2:A${filtered.length + 1}) &rarr; <span class="text-slate-700 font-bold">${filtered.length} Jenis SKU</span>
+                    </td>
+                    <td class="text-right font-mono text-emerald-900">JUMLAH STOK:</td>
+                    <td class="text-right font-mono text-blue-900 text-sm font-black bg-emerald-100/80 px-2 py-1 border border-emerald-300">=SUM(D2:D${filtered.length + 1}) [${totalUnits.toFixed(1)}]</td>
+                    <td colspan="2" class="text-center font-mono text-xs">
+                        AMARAN: <span class="text-rose-700 font-bold">${criticalCount} PERLU TINDAKAN</span>
+                    </td>
+                    <td colspan="2" class="text-right font-mono text-slate-500 text-[10px]">LEMBARAN SIMPLE PRO</td>
+                </tr>
+            `;
+
+            const formulaDisp = document.getElementById('excel-formula-display');
+            if (formulaDisp) {
+                formulaDisp.innerText = `=SUM(D2:D${filtered.length + 1}) ➔ Total SKUs: ${filtered.length} | Ringkasan Lembaran Kerja Royal Bakery`;
+            }
+
+            const statCount = document.getElementById('excel-stat-count');
+            if (statCount) statCount.innerText = `JUMLAH BARIS: ${filtered.length}`;
+
+            const statSum = document.getElementById('excel-stat-sum');
+            if (statSum) statSum.innerText = `JUMLAH UNIT: ${totalUnits.toFixed(1)}`;
+        }
+
+        function copyExcelFormatToClipboard() {
+            if (items.length === 0) {
+                showToast("Tiada data untuk disalin ke Excel", "info");
+                return;
+            }
+
+            let tsv = "KOD BAHAN\tNAMA BAHAN\tKATEGORI\tSTOK SEMASA\tUNIT\tSTATUS\tPEMBEKAL\tTARIKH\n";
+
+            items.forEach(item => {
+                let status = "OK";
+                if (item.currentStock <= 0) status = "KEHABISAN";
+                else if (item.currentStock <= item.reorderPoint) status = "PESAN SEMULA";
+
+                tsv += `${item.sku}\t${item.name}\t${item.category}\t${item.currentStock}\t${item.unit}\t${status}\t${item.supplier || '-'}\t${item.date || '-'}\n`;
+            });
+
+            const textarea = document.createElement('textarea');
+            textarea.value = tsv;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Data bersesuaian Excel berjaya disalin! Tampal terus ke MS Excel / Google Sheets.", "success");
+            } catch (err) {
+                showToast("Gagal menyalin data Excel.", "error");
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function printExcelSheet() {
+            window.print();
+        }
+
+        /* ==================== CORE EVENT HANDLERS ==================== */
+        async function handleSaveItem(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('item-edit-id').value;
+            const sku = document.getElementById('item-sku').value.trim();
+            const category = document.getElementById('item-category').value;
+            const name = document.getElementById('item-name').value.trim();
+            const unit = document.getElementById('item-unit').value.trim();
+            const date = document.getElementById('item-date').value;
+            const currentStock = parseFloat(document.getElementById('item-stock').value) || 0;
+            const reorderPoint = parseFloat(document.getElementById('item-reorder').value) || 0;
+            const parLevel = parseFloat(document.getElementById('item-par').value) || 0;
+            const supplier = document.getElementById('item-supplier').value.trim();
+
+            const itemData = { sku, category, name, unit, date, currentStock, reorderPoint, parLevel, supplier };
+
+            if (db && currentUser) {
+                if (editId) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', editId);
+                    await updateDoc(docRef, itemData);
+                    showToast(`Bahan ${name} dikemas kini secara real-time!`, "success");
+                } else {
+                    const newId = Date.now().toString();
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', newId);
+                    await setDoc(docRef, { id: newId, ...itemData });
+                    showToast(`Bahan baharu ${name} ditambah ke awan!`, "success");
+                }
+            } else {
+                if (editId) {
+                    const index = items.findIndex(i => i.id === editId);
+                    if (index !== -1) items[index] = { ...items[index], ...itemData };
+                } else {
+                    items.push({ id: Date.now().toString(), ...itemData });
+                }
+                saveDataLocal();
+                updateAllViews();
+                showToast(`Bahan ${name} disimpan tempatan.`, "success");
+            }
+
+            closeModal('modal-item');
+        }
+
+        async function adjustStockDirect(itemId, delta) {
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            const newQty = Math.max(0, item.currentStock + delta);
+            const actualDelta = newQty - item.currentStock;
+            if (actualDelta === 0 && delta < 0) return;
+
+            const now = new Date();
+            const logEntry = {
+                timestamp: now.getTime(),
+                time: now.toLocaleString('ms-MY'),
+                type: delta > 0 ? 'STOCK_IN' : 'STOCK_OUT',
+                itemName: item.name,
+                qty: `${delta > 0 ? '+' : ''}${actualDelta} ${item.unit}`,
+                reason: 'Pelarasan Pantas Inventori',
+                user: 'Staf Royal Bakery'
+            };
+
+            if (db && currentUser) {
+                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId);
+                await updateDoc(itemRef, { currentStock: newQty });
+
+                const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
+                await addDoc(logsColRef, logEntry);
+            } else {
+                item.currentStock = newQty;
+                activityLogs.unshift({ id: 'log-' + Date.now(), ...logEntry });
+                saveDataLocal();
+                updateAllViews();
+            }
+        }
+
+        async function handleStockIn(e) {
+            e.preventDefault();
+            const itemId = document.getElementById('stock-in-item').value;
+            const qty = parseFloat(document.getElementById('stock-in-qty').value) || 0;
+            const ref = document.getElementById('stock-in-supplier').value.trim() || 'Terima Serahan';
+            const user = document.getElementById('stock-in-user').value.trim() || 'Staf';
+
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            const newStock = item.currentStock + qty;
+            const now = new Date();
+            const logEntry = {
+                timestamp: now.getTime(),
+                time: now.toLocaleString('ms-MY'),
+                type: 'STOCK_IN',
+                itemName: item.name,
+                qty: `+${qty} ${item.unit}`,
+                reason: ref,
+                user: user
+            };
+
+            if (db && currentUser) {
+                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId);
+                await updateDoc(itemRef, { currentStock: newStock });
+
+                const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
+                await addDoc(logsColRef, logEntry);
+            } else {
+                item.currentStock = newStock;
+                activityLogs.unshift({ id: 'log-' + Date.now(), ...logEntry });
+                saveDataLocal();
+                updateAllViews();
+            }
+
+            closeModal('modal-stock-in');
+            showToast(`Stok masuk +${qty} ${item.unit} dikemas kini real-time.`, "success");
+        }
+
+        async function handleStockOut(e) {
+            e.preventDefault();
+            const itemId = document.getElementById('stock-out-item').value;
+            const qty = parseFloat(document.getElementById('stock-out-qty').value) || 0;
+            const reason = document.getElementById('stock-out-reason').value;
+            const user = document.getElementById('stock-out-user').value.trim() || 'Staf';
+
+            const item = items.find(i => i.id === itemId);
+            if (!item) return;
+
+            const newStock = Math.max(0, item.currentStock - qty);
+            const now = new Date();
+            const logEntry = {
+                timestamp: now.getTime(),
+                time: now.toLocaleString('ms-MY'),
+                type: 'STOCK_OUT',
+                itemName: item.name,
+                qty: `-${qty} ${item.unit}`,
+                reason: reason,
+                user: user
+            };
+
+            if (db && currentUser) {
+                const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', itemId);
+                await updateDoc(itemRef, { currentStock: newStock });
+
+                const logsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
+                await addDoc(logsColRef, logEntry);
+            } else {
+                item.currentStock = newStock;
+                activityLogs.unshift({ id: 'log-' + Date.now(), ...logEntry });
+                saveDataLocal();
+                updateAllViews();
+            }
+
+            closeModal('modal-stock-out');
+            showToast(`Pengurangan stok -${qty} ${item.unit} direkodkan real-time.`, "info");
+        }
+
+        async function confirmDeleteItem(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+
+            showConfirmModal("Padam Bahan Inventori", `Adakah anda pasti mahu memadam "${item.name}"?`, async () => {
+                if (db && currentUser) {
+                    const itemRef = doc(db, 'artifacts', appId, 'public', 'data', 'items', id);
+                    await deleteDoc(itemRef);
+                    showToast(`Bahan ${item.name} dipadam daripada awan.`, "info");
+                } else {
+                    items = items.filter(i => i.id !== id);
+                    saveDataLocal();
+                    updateAllViews();
+                    showToast(`Bahan ${item.name} dipadam secara tempatan.`, "info");
+                }
+            });
+        }
+
+        async function resetToSampleData() {
+            showConfirmModal("Set Semula Data Inventori", "Adakah anda pasti mahu mengembalikan data sampel asal ke pangkalan data?", async () => {
+                if (db && currentUser) {
+                    for (const item of items) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'items', item.id));
+                    }
+                    const itemsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'items');
+                    await seedInitialCloudData(itemsColRef);
+                } else {
+                    items = JSON.parse(JSON.stringify(SAMPLE_ITEMS));
+                    activityLogs = [];
+                    saveDataLocal();
+                    updateAllViews();
+                }
+                showToast("Data sampel Royal Bakery berjaya dikembalikan!", "success");
+            });
+        }
+
+        function renderDashboard() {
+            let lowStockCount = 0;
+            let outOfStockCount = 0;
+            let healthyCount = 0;
+            const categoryCounts = {};
+
+            items.forEach(item => {
+                if (item.currentStock <= 0) {
+                    outOfStockCount++;
+                } else if (item.currentStock <= item.reorderPoint) {
+                    lowStockCount++;
+                } else {
+                    healthyCount++;
+                }
+                categoryCounts[item.category] = (categoryCounts[item.category] || 0) + 1;
+            });
+
+            const healthPct = items.length > 0 ? Math.round((healthyCount / items.length) * 100) : 0;
+
+            document.getElementById('kpi-total-skus').innerText = `${items.length} Bahan`;
+            document.getElementById('kpi-low-stock').innerText = lowStockCount;
+            document.getElementById('kpi-out-stock').innerText = outOfStockCount;
+            document.getElementById('kpi-health-pct').innerText = `${healthPct}%`;
+
+            const alertTable = document.getElementById('dashboard-alert-table');
+            alertTable.innerHTML = '';
+
+            const alertItems = items.filter(i => i.currentStock <= i.reorderPoint);
+
+            if (alertItems.length === 0) {
+                alertTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-6 text-center text-slate-400 italic">
+                            <i class="fa-solid fa-circle-check text-emerald-600 mr-1"></i> Semua paras stok Royal Bakery berada dalam keadaan optimum!
+                        </td>
+                    </tr>
+                `;
+            } else {
+                alertItems.forEach(item => {
+                    alertTable.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="py-2.5 px-3 font-semibold text-slate-800">
+                                <div>${item.name}</div>
+                                <div class="text-[10px] text-slate-400 font-mono">${item.sku}</div>
+                            </td>
+                            <td class="py-2.5 px-3 text-slate-600">${item.category}</td>
+                            <td class="py-2.5 px-3 font-bold ${item.currentStock <= 0 ? 'text-rose-600' : 'text-amber-600'}">${item.currentStock} ${item.unit}</td>
+                            <td class="py-2.5 px-3 text-slate-500">${item.reorderPoint} ${item.unit}</td>
+                            <td class="py-2.5 px-3 text-slate-600 font-mono">${item.date || '-'}</td>
+                            <td class="py-2.5 px-3 text-right">
+                                <button onclick="window.quickStockIn('${item.id}')" class="px-2 py-1 text-[11px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded shadow-2xs transition">
+                                    + Terima
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const catContainer = document.getElementById('category-breakdown-list');
+            catContainer.innerHTML = '';
+            
+            const totalItems = items.length || 1;
+            Object.keys(categoryCounts).forEach(cat => {
+                const count = categoryCounts[cat];
+                const pct = ((count / totalItems) * 100).toFixed(1);
+                
+                catContainer.innerHTML += `
+                    <div>
+                        <div class="flex justify-between text-xs font-semibold text-slate-700 mb-1">
+                            <span>${cat}</span>
+                            <span class="font-mono text-slate-900">${count} Jenis (${pct}%)</span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                            <div class="h-full bg-blue-700 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderMasterInventory() {
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+
+            const searchTerm = document.getElementById('inv-search').value.toLowerCase();
+            const catFilter = document.getElementById('inv-filter-cat').value;
+            const statusFilter = document.getElementById('inv-filter-status').value;
+
+            const filtered = items.filter(item => {
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm) || 
+                                      item.sku.toLowerCase().includes(searchTerm) ||
+                                      (item.supplier && item.supplier.toLowerCase().includes(searchTerm));
+                const matchesCat = catFilter === 'ALL' || item.category === catFilter;
+                
+                let matchesStatus = true;
+                if (statusFilter === 'OK') matchesStatus = item.currentStock > item.reorderPoint;
+                if (statusFilter === 'REORDER') matchesStatus = item.currentStock <= item.reorderPoint && item.currentStock > 0;
+                if (statusFilter === 'OUT') matchesStatus = item.currentStock <= 0;
+
+                return matchesSearch && matchesCat && matchesStatus;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="py-8 text-center text-slate-400 font-medium">
+                            Tiada item yang sepadan dengan kriteria carian atau tapisan semasa.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                let statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded">ADA STOK</span>`;
+
+                if (item.currentStock <= 0) {
+                    statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-800 rounded">KEHABISAN</span>`;
+                } else if (item.currentStock <= item.reorderPoint) {
+                    statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 rounded">PESAN SEMULA</span>`;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-semibold text-slate-800">
+                            <div class="font-bold text-slate-900">${item.name}</div>
+                            <div class="flex items-center space-x-2 mt-1">
+                                <span class="text-[10px] text-slate-400 font-mono bg-slate-100 px-1.5 py-0.5 rounded">${item.sku}</span>
+                                <button onclick="window.quickStockIn('${item.id}')" class="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded transition shadow-2xs" title="Terima Stok">
+                                    <i class="fa-solid fa-plus text-[9px]"></i>
+                                    <span>Terima Stok</span>
+                                </button>
+                                <button onclick="window.adjustStockDirect('${item.id}', 1)" class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 hover:bg-blue-200 text-blue-800 rounded transition" title="+1 Unit">
+                                    +1
+                                </button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-600">${item.category}</td>
+                        <td class="py-3 px-4 font-mono font-medium text-slate-700">${item.date || '-'}</td>
+                        <td class="py-3 px-4 font-bold ${item.currentStock <= item.reorderPoint ? 'text-amber-600' : 'text-slate-900'}">
+                            <div class="flex items-center space-x-1.5">
+                                <span>${item.currentStock} ${item.unit}</span>
+                                <div class="inline-flex space-x-0.5 ml-1">
+                                    <button onclick="window.adjustStockDirect('${item.id}', -1)" class="w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-bold flex items-center justify-center text-[10px]" title="Tolak 1">-</button>
+                                    <button onclick="window.adjustStockDirect('${item.id}', 1)" class="w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-bold flex items-center justify-center text-[10px]" title="Tambah 1">+</button>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-500">${item.reorderPoint} / ${item.parLevel} ${item.unit}</td>
+                        <td class="py-3 px-4 text-slate-700 font-medium">${item.supplier || '-'}</td>
+                        <td class="py-3 px-4">${statusBadge}</td>
+                        <td class="py-3 px-4 text-right space-x-2">
+                            <button onclick="window.editItem('${item.id}')" class="text-slate-400 hover:text-blue-700 transition" title="Kemas Kini">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="window.confirmDeleteItem('${item.id}')" class="text-slate-400 hover:text-rose-600 transition" title="Padam">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function resetInventoryFilters() {
+            document.getElementById('inv-search').value = '';
+            document.getElementById('inv-filter-cat').value = 'ALL';
+            document.getElementById('inv-filter-status').value = 'ALL';
+            renderMasterInventory();
+        }
+
+        function renderReorderList() {
+            const tbody = document.getElementById('reorder-table-body');
+            tbody.innerHTML = '';
+
+            const reorderItems = items.filter(item => item.currentStock <= item.reorderPoint);
+
+            if (reorderItems.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="py-10 text-center text-slate-400 font-medium">
+                            <i class="fa-solid fa-circle-check text-xl text-emerald-600 mb-2 block"></i>
+                            Tahniah! Semua paras stok Royal Bakery berada di atas paras stok minimum.
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('reorder-summary-count').innerText = "0 Item";
+                document.getElementById('reorder-summary-cats').innerText = "0 Kategori";
+                document.getElementById('reorder-summary-priority').innerText = "Optimum";
+                return;
+            }
+
+            const uniqueCats = new Set(reorderItems.map(i => i.category)).size;
+
+            reorderItems.forEach(item => {
+                const suggestedOrder = Math.max(0, item.parLevel - item.currentStock);
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-semibold text-slate-800">
+                            <div>${item.name}</div>
+                            <div class="text-[10px] text-slate-400 font-mono">${item.sku}</div>
+                        </td>
+                        <td class="py-3 px-4 text-slate-600">${item.category}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-700">${item.supplier || 'Tiada'}</td>
+                        <td class="py-3 px-4 font-bold text-rose-600">${item.currentStock} ${item.unit}</td>
+                        <td class="py-3 px-4 text-slate-500">${item.parLevel} ${item.unit}</td>
+                        <td class="py-3 px-4 font-bold text-blue-700">${suggestedOrder} ${item.unit}</td>
+                        <td class="py-3 px-4 font-mono text-slate-700">${item.date || '-'}</td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="window.quickStockIn('${item.id}')" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded shadow-2xs transition">
+                                Terima Stok
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('reorder-summary-count').innerText = `${reorderItems.length} Item`;
+            document.getElementById('reorder-summary-cats').innerText = `${uniqueCats} Kategori`;
+            document.getElementById('reorder-summary-priority').innerText = reorderItems.some(i => i.currentStock <= 0) ? "Kritikal (Stok Kosong)" : "Sederhana";
+        }
+
+        function updateReorderBadge() {
+            const badge = document.getElementById('reorder-badge');
+            const count = items.filter(i => i.currentStock <= i.reorderPoint).length;
+            if (count > 0) {
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openPOModal() {
+            const reorderItems = items.filter(item => item.currentStock <= item.reorderPoint);
+            if (reorderItems.length === 0) {
+                showToast("Tiada item pesanan semula diperlukan buat masa ini.", "info");
+                return;
+            }
+
+            document.getElementById('po-date').innerText = new Date().toLocaleDateString('ms-MY');
+            document.getElementById('po-number').innerText = `PO-${Date.now().toString().substr(-6)}`;
+
+            const poTbody = document.getElementById('po-items-table');
+            poTbody.innerHTML = '';
+
+            reorderItems.forEach(item => {
+                const suggestedOrder = Math.max(0, item.parLevel - item.currentStock);
+                poTbody.innerHTML += `
+                    <tr>
+                        <td class="p-2 border-r border-slate-300 font-mono">${item.sku}</td>
+                        <td class="p-2 border-r border-slate-300 font-semibold">${item.name}</td>
+                        <td class="p-2 border-r border-slate-300">${item.supplier || '-'}</td>
+                        <td class="p-2 border-r border-slate-300 text-center font-bold">${suggestedOrder} ${item.unit}</td>
+                        <td class="p-2 text-center font-mono">${item.date || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('modal-po').classList.remove('hidden');
+        }
+
+        function printPO() {
+            window.print();
+        }
+
+        function copyReorderListToClipboard() {
+            const reorderItems = items.filter(item => item.currentStock <= item.reorderPoint);
+            if (reorderItems.length === 0) {
+                showToast("Tiada item yang memerlukan pesanan semula.", "info");
+                return;
+            }
+
+            let text = `SENARAI PESANAN PEMBEKAL - ROYAL BAKERY (KV SULTAN ABDUL SAMAD) (${new Date().toLocaleDateString('ms-MY')})\n`;
+            text += `=========================================================\n\n`;
+
+            reorderItems.forEach((item, index) => {
+                const suggested = Math.max(0, item.parLevel - item.currentStock);
+                text += `${index + 1}. ${item.name} (${item.sku})\n`;
+                text += `   Pembekal: ${item.supplier || 'Tiada'}\n`;
+                text += `   Stok Semasa: ${item.currentStock} ${item.unit} | Maksimum: ${item.parLevel} ${item.unit}\n`;
+                text += `   Kuantiti Pesanan: ${suggested} ${item.unit}\n`;
+                text += `   Tarikh Record: ${item.date || '-'}\n\n`;
+            });
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast("Borang pesanan pembekal Royal Bakery berjaya disalin!", "success");
+            } catch (err) {
+                showToast("Gagal menyalin ke papan klip", "error");
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function exportCSVData() {
+            if (items.length === 0) {
+                showToast("Tiada data inventori untuk dieksport.", "info");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Kod Bahan,Nama Bahan,Kategori,Unit Ukuran,Tarikh,Stok Semasa,Stok Minimum,Stok Maksimum,Pembekal\n";
+
+            items.forEach(item => {
+                const row = [
+                    `"${item.sku}"`,
+                    `"${item.name}"`,
+                    `"${item.category}"`,
+                    `"${item.unit}"`,
+                    `"${item.date || ''}"`,
+                    item.currentStock,
+                    item.reorderPoint,
+                    item.parLevel,
+                    `"${item.supplier || ''}"`
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Inventori_Royal_Bakery_KVSAS_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("Fail CSV inventori berjaya dimuat turun!", "success");
+        }
+
+        function openAddItemModal() {
+            document.getElementById('modal-item-title').innerText = "Tambah Bahan Baharu Royal Bakery";
+            document.getElementById('item-edit-id').value = '';
+            document.getElementById('form-item').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('item-date').value = today;
+            document.getElementById('modal-item').classList.remove('hidden');
+        }
+
+        function editItem(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+
+            document.getElementById('modal-item-title').innerText = "Kemas Kini Bahan Royal Bakery";
+            document.getElementById('item-edit-id').value = item.id;
+            document.getElementById('item-sku').value = item.sku;
+            document.getElementById('item-category').value = item.category;
+            document.getElementById('item-name').value = item.name;
+            document.getElementById('item-unit').value = item.unit;
+            document.getElementById('item-date').value = item.date || new Date().toISOString().split('T')[0];
+            document.getElementById('item-stock').value = item.currentStock;
+            document.getElementById('item-reorder').value = item.reorderPoint;
+            document.getElementById('item-par').value = item.parLevel;
+            document.getElementById('item-supplier').value = item.supplier || '';
+
+            document.getElementById('modal-item').classList.remove('hidden');
+        }
+
+        function openStockInModal() {
+            populateDropdowns();
+            document.getElementById('form-stock-in').reset();
+            document.getElementById('modal-stock-in').classList.remove('hidden');
+        }
+
+        function quickStockIn(itemId) {
+            openStockInModal();
+            document.getElementById('stock-in-item').value = itemId;
+        }
+
+        function openStockOutModal() {
+            populateDropdowns();
+            document.getElementById('form-stock-out').reset();
+            document.getElementById('modal-stock-out').classList.remove('hidden');
+        }
+
+        function renderActivityLogs() {
+            const tbody = document.getElementById('logs-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const searchTerm = (document.getElementById('log-search')?.value || '').toLowerCase();
+            const periodFilter = document.getElementById('log-filter-period')?.value || 'ALL';
+            const typeFilter = document.getElementById('log-filter-type')?.value || 'ALL';
+
+            const now = new Date();
+            const todayStr = now.toDateString();
+
+            const filtered = activityLogs.filter(log => {
+                const matchesSearch = !searchTerm || 
+                    (log.itemName && log.itemName.toLowerCase().includes(searchTerm)) ||
+                    (log.reason && log.reason.toLowerCase().includes(searchTerm)) ||
+                    (log.user && log.user.toLowerCase().includes(searchTerm));
+
+                const matchesType = typeFilter === 'ALL' || log.type === typeFilter;
+
+                let matchesPeriod = true;
+                const logDate = log.timestamp ? new Date(log.timestamp) : new Date();
+                const dayOfMonth = logDate.getDate();
+
+                if (periodFilter === 'TODAY') {
+                    matchesPeriod = logDate.toDateString() === todayStr;
+                } else if (periodFilter === 'THIS_WEEK') {
+                    const diffDays = Math.floor((now - logDate) / (1000 * 60 * 60 * 24));
+                    matchesPeriod = diffDays >= 0 && diffDays < 7;
+                } else if (periodFilter === 'WEEK1') {
+                    matchesPeriod = dayOfMonth >= 1 && dayOfMonth <= 7 && logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+                } else if (periodFilter === 'WEEK2') {
+                    matchesPeriod = dayOfMonth >= 8 && dayOfMonth <= 14 && logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+                } else if (periodFilter === 'WEEK3') {
+                    matchesPeriod = dayOfMonth >= 15 && dayOfMonth <= 21 && logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+                } else if (periodFilter === 'WEEK4') {
+                    matchesPeriod = dayOfMonth >= 22 && dayOfMonth <= 31 && logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+                } else if (periodFilter === 'THIS_MONTH') {
+                    matchesPeriod = logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
+                }
+
+                return matchesSearch && matchesType && matchesPeriod;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-slate-400 font-medium">
+                            Tiada sebarang rekod log aktiviti yang sepadan dengan tapisan carian atau tempoh masa ini.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(log => {
+                const typeBadge = log.type === 'STOCK_IN' 
+                    ? `<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded">TERIMA STOK</span>`
+                    : `<span class="px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-800 rounded">GUNA / SISA</span>`;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="py-3 px-4 font-mono text-slate-500 text-[11px]">${log.time}</td>
+                        <td class="py-3 px-4">${typeBadge}</td>
+                        <td class="py-3 px-4 font-bold text-slate-900">${log.itemName}</td>
+                        <td class="py-3 px-4 font-bold ${log.type === 'STOCK_IN' ? 'text-emerald-600' : 'text-rose-600'}">${log.qty}</td>
+                        <td class="py-3 px-4 text-slate-600">${log.reason}</td>
+                        <td class="py-3 px-4 text-slate-700 font-medium">${log.user}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function clearActivityLogs() {
+            showConfirmModal("Kosongkan Log Aktiviti", "Adakah anda pasti mahu memadam semua rekod log aktiviti stok?", async () => {
+                if (db && currentUser) {
+                    for (const log of activityLogs) {
+                        if (log.id) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', log.id));
+                        }
+                    }
+                } else {
+                    activityLogs = [];
+                    saveDataLocal();
+                    renderActivityLogs();
+                }
+                showToast("Semua log aktiviti telah dikosongkan.", "info");
+            });
+        }
+
+        /* ==================== FIREBASE CONFIG MODAL FUNCTIONS ==================== */
+        function openConfigModal() {
+            const txt = document.getElementById('firebase-cfg-json');
+            if (activeFirebaseConfig) {
+                txt.value = JSON.stringify(activeFirebaseConfig, null, 2);
+            } else {
+                txt.value = '';
+            }
+            document.getElementById('modal-config').classList.remove('hidden');
+        }
+
+        function saveFirebaseConfig() {
+            const raw = document.getElementById('firebase-cfg-json').value.trim();
+            try {
+                const parsed = JSON.parse(raw);
+                if (!parsed.projectId || !parsed.apiKey) {
+                    showToast("Pastikan JSON mengandungi sekurang-kurangnya apiKey & projectId!", "error");
+                    return;
+                }
+                localStorage.setItem('rb_user_firebase_cfg', JSON.stringify(parsed));
+                showToast("Kunci Firebase berjaya disimpan! Memuat semula sistem real-time...", "success");
+                setTimeout(() => location.reload(), 1000);
+            } catch(e) {
+                showToast("Format JSON Firebase tidak sah. Semak semula kurungan dan pembuka kata.", "error");
+            }
+        }
+
+        function clearFirebaseConfig() {
+            localStorage.removeItem('rb_user_firebase_cfg');
+            showToast("Tetapan Firebase dipadam. Menggunakan mod simpanan tempatan.", "info");
+            setTimeout(() => location.reload(), 1000);
+        }
+
+        function populateDropdowns() {
+            const inSelect = document.getElementById('stock-in-item');
+            const outSelect = document.getElementById('stock-out-item');
+
+            if (!inSelect || !outSelect) return;
+
+            inSelect.innerHTML = '';
+            outSelect.innerHTML = '';
+
+            items.forEach(item => {
+                const opt = `<option value="${item.id}">${item.sku} - ${item.name} (${item.currentStock} ${item.unit})</option>`;
+                inSelect.innerHTML += opt;
+                outSelect.innerHTML += opt;
+            });
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirm-title').innerText = title;
+            document.getElementById('confirm-message').innerText = message;
+            
+            const actionBtn = document.getElementById('confirm-action-btn');
+            actionBtn.onclick = function() {
+                onConfirm();
+                closeModal('modal-confirm');
+            };
+
+            document.getElementById('modal-confirm').classList.remove('hidden');
+        }
+
+        function showToast(message, type = "info") {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = "bg-slate-900 text-white border border-slate-700";
+            let icon = '<i class="fa-solid fa-info-circle text-blue-400 mr-2"></i>';
+
+            if (type === "success") {
+                bgClass = "bg-emerald-800 text-white border border-emerald-600";
+                icon = '<i class="fa-solid fa-circle-check text-emerald-300 mr-2"></i>';
+            } else if (type === "error") {
+                bgClass = "bg-rose-800 text-white border border-rose-600";
+                icon = '<i class="fa-solid fa-circle-exclamation text-rose-300 mr-2"></i>';
+            }
+
+            toast.className = `${bgClass} px-4 py-3 rounded-lg shadow-xl text-xs font-bold flex items-center pointer-events-auto transform transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `<div>${icon}${message}</div>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Attach functions to window scope for inline HTML event handlers
+        window.switchTab = switchTab;
+        window.resetToSampleData = resetToSampleData;
+        window.renderMasterInventory = renderMasterInventory;
+        window.resetInventoryFilters = resetInventoryFilters;
+        window.adjustStockDirect = adjustStockDirect;
+        window.quickStockIn = quickStockIn;
+        window.editItem = editItem;
+        window.confirmDeleteItem = confirmDeleteItem;
+        window.openAddItemModal = openAddItemModal;
+        window.openStockInModal = openStockInModal;
+        window.openStockOutModal = openStockOutModal;
+        window.openPOModal = openPOModal;
+        window.openExcelModal = openExcelModal;
+        window.renderExcelTable = renderExcelTable;
+        window.copyExcelFormatToClipboard = copyExcelFormatToClipboard;
+        window.printExcelSheet = printExcelSheet;
+        window.closeModal = closeModal;
+        window.handleSaveItem = handleSaveItem;
+        window.handleStockIn = handleStockIn;
+        window.handleStockOut = handleStockOut;
+        window.copyReorderListToClipboard = copyReorderListToClipboard;
+        window.exportCSVData = exportCSVData;
+        window.renderActivityLogs = renderActivityLogs;
+        window.clearActivityLogs = clearActivityLogs;
+        window.printPO = printPO;
+        window.openConfigModal = openConfigModal;
+        window.saveFirebaseConfig = saveFirebaseConfig;
+        window.clearFirebaseConfig = clearFirebaseConfig;
+    </script>
+</body>
+</html>
