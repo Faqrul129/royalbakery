@@ -169,19 +169,28 @@
 
                 <!-- Action Button Cluster -->
                 <div class="flex items-center space-x-2">
+                    <!-- Current User Session Badge -->
+                    <div id="user-session-badge" class="hidden sm:flex items-center space-x-1.5 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-300">
+                        <i class="fa-solid fa-user-shield text-blue-400" id="session-icon"></i>
+                        <span id="session-name" class="font-bold">Admin</span>
+                        <button onclick="logoutSession()" class="text-rose-400 hover:text-rose-300 ml-1.5" title="Tukar Akaun">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+
                     <!-- Firebase Cloud Sync Status Indicator -->
-                    <button onclick="openConfigModal()" id="cloud-status-btn" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 flex items-center space-x-2 transition" title="Tetapan Firebase Cloud Sync">
+                    <button onclick="openConfigModal()" id="cloud-status-btn" class="px-3 py-2 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-slate-300 flex items-center space-x-2 transition" title="Tetapan Firebase Cloud Sync">
                         <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-                        <span id="sync-label" class="hidden md:inline font-mono font-medium">Awan / Lokal</span>
+                        <span id="sync-label" class="hidden md:inline font-mono font-medium">Mod Awan</span>
                     </button>
 
-                    <!-- EXCEL VIEW BUTTON -->
-                    <button onclick="openExcelModal()" class="px-3 py-2 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition flex items-center space-x-1.5 ring-2 ring-emerald-500/50">
+                    <!-- EXCEL VIEW BUTTON (Matched sizing with other top action buttons) -->
+                    <button onclick="openExcelModal()" class="px-3 py-2 text-xs sm:text-sm bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm transition flex items-center space-x-1.5 ring-2 ring-emerald-500/50 leading-tight">
                         <i class="fa-solid fa-file-excel text-base"></i>
                         <span class="hidden sm:inline">Paparan Excel Simple</span>
                     </button>
 
-                    <button onclick="openStockInModal()" class="px-3 py-2 text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition flex items-center space-x-1.5">
+                    <button id="btn-stock-in" onclick="openStockInModal()" class="px-3 py-2 text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition flex items-center space-x-1.5">
                         <i class="fa-solid fa-plus-circle"></i>
                         <span class="hidden sm:inline">Terima Stok</span>
                     </button>
@@ -189,7 +198,7 @@
                         <i class="fa-solid fa-minus-circle"></i>
                         <span class="hidden sm:inline">Guna / Sisa</span>
                     </button>
-                    <button onclick="openAddItemModal()" class="px-3 py-2 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm transition flex items-center space-x-1.5 border border-slate-700">
+                    <button id="btn-add-item" onclick="openAddItemModal()" class="px-3 py-2 text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm transition flex items-center space-x-1.5 border border-slate-700">
                         <i class="fa-solid fa-box"></i>
                         <span class="hidden md:inline">Item Baharu</span>
                     </button>
@@ -371,7 +380,7 @@
                     
                     <div class="mt-6 pt-4 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500">
                         <span>Royal Bakery - KVSAS</span>
-                        <button onclick="resetToSampleData()" class="text-blue-600 hover:underline font-semibold">Set Semula Data Sampel</button>
+                        <button id="btn-reset-sample" onclick="resetToSampleData()" class="text-blue-600 hover:underline font-semibold">Set Semula Data Sampel</button>
                     </div>
                 </div>
             </div>
@@ -541,7 +550,7 @@
                     </select>
 
                     <!-- Clear Button -->
-                    <button onclick="clearActivityLogs()" class="text-xs text-rose-700 hover:text-rose-900 font-semibold px-2.5 py-1.5 border border-rose-300 rounded-lg hover:bg-rose-50 transition" title="Kosongkan Log">
+                    <button id="btn-clear-logs" onclick="clearActivityLogs()" class="text-xs text-rose-700 hover:text-rose-900 font-semibold px-2.5 py-1.5 border border-rose-300 rounded-lg hover:bg-rose-50 transition" title="Kosongkan Log">
                         <i class="fa-solid fa-trash-can"></i>
                     </button>
                 </div>
@@ -669,6 +678,80 @@
         </div>
     </div>
 
+    <!-- MODAL: Role Selection (Pelajar vs Admin) upon visiting website -->
+    <div id="modal-role-select" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-300 overflow-hidden flex flex-col">
+            <div class="px-6 py-5 bg-slate-900 text-white text-center">
+                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl font-bold mx-auto mb-2 shadow-inner">
+                    <i class="fa-solid fa-crown text-amber-300"></i>
+                </div>
+                <h3 class="font-bold text-base uppercase tracking-wider text-white">Royal Bakery - KVSAS</h3>
+                <p class="text-xs text-slate-400 mt-1">Sila pilih mod akses anda sebelum masuk ke sistem</p>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <!-- Option 1: Student / Pelajar -->
+                <div onclick="selectRole('student')" class="p-4 rounded-xl border-2 border-slate-200 hover:border-blue-600 hover:bg-blue-50/50 cursor-pointer transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-lg font-bold group-hover:bg-blue-600 group-hover:text-white transition">
+                            <i class="fa-solid fa-user-graduate"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Akses Pelajar</h4>
+                            <p class="text-xs text-slate-500">Masukkan nama untuk rekod & guna/sisa bahan sahaja</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Option 2: Admin -->
+                <div onclick="showAdminLoginPrompt()" class="p-4 rounded-xl border-2 border-slate-200 hover:border-emerald-600 hover:bg-emerald-50/50 cursor-pointer transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg font-bold group-hover:bg-emerald-600 group-hover:text-white transition">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">Akses Admin</h4>
+                            <p class="text-xs text-slate-500">Akses penuh sistem (Memerlukan kata laluan)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUB-MODAL: Student Name Input -->
+    <div id="modal-student-login" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center space-y-4 border border-slate-300">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-user-graduate"></i>
+            </div>
+            <h3 class="font-bold text-slate-900 text-base">Log Masuk Pelajar</h3>
+            <p class="text-xs text-slate-500">Sila masukkan nama penuh anda sebagai rekod sebelum menggunakan sistem.</p>
+            <input type="text" id="student-name-input" placeholder="Cth: Ahmad Zikri" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none text-center font-semibold">
+            <div class="flex justify-center space-x-2 pt-2">
+                <button onclick="backToRoleSelect()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100">Kembali</button>
+                <button onclick="confirmStudentLogin()" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold shadow-xs">Teruskan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SUB-MODAL: Admin Password Input -->
+    <div id="modal-admin-login" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 text-center space-y-4 border border-slate-300">
+            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <h3 class="font-bold text-slate-900 text-base">Pengesahan Admin</h3>
+            <p class="text-xs text-slate-500">Sila masukkan nama admin dan kata laluan sistem.</p>
+            <input type="text" id="admin-name-input" placeholder="Nama Admin" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none text-center font-semibold">
+            <input type="password" id="admin-pass-input" placeholder="Kata Laluan (adminkvsas26)" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none text-center font-mono">
+            <div class="flex justify-center space-x-2 pt-2">
+                <button onclick="backToRoleSelect()" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-100">Kembali</button>
+                <button onclick="confirmAdminLogin()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs">Log Masuk</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: Add / Edit Item -->
     <div id="modal-item" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center hidden p-4">
         <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl border border-slate-300 overflow-hidden flex flex-col max-h-[90vh]">
@@ -776,7 +859,7 @@
 
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Direkod Oleh Staff</label>
-                    <input type="text" id="stock-in-user" required placeholder="Fatin / Tukang Roti" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                    <input type="text" id="stock-in-user" required readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-700">
                 </div>
 
                 <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100">
@@ -824,8 +907,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Direkod Oleh Staff</label>
-                    <input type="text" id="stock-out-user" required placeholder="Fatin / Chef Pastri" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-rose-600 focus:outline-none">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Direkod Oleh (Pelajar / Staff)</label>
+                    <input type="text" id="stock-out-user" required readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-700">
                 </div>
 
                 <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100">
@@ -941,7 +1024,7 @@
         </div>
     </div>
 
-    <!-- JavaScript Application Logic with Auto-Embedded Firebase Realtime Database (RTDB) -->
+    <!-- JavaScript Application Logic with Role-Based Access Control & Auto-Cloud Firebase RTDB -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, onValue, set, push, remove, update } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
@@ -954,8 +1037,9 @@
         };
 
         let rtdb = null;
+        let currentUserSession = null; // { role: 'student' | 'admin', name: string }
 
-        // Sample Default Items
+        // Sample Default Items (Only used if database is completely empty)
         const SAMPLE_ITEMS = [
             { id: "1", sku: "BHN-001", name: "Tepung Gandum Roti Premium", category: "Bahan Mentah", unit: "beg 25kg", date: "2026-10-15", currentStock: 2, reorderPoint: 3, parLevel: 8, supplier: "Pembekal Tepung Malaya Sdn Bhd" },
             { id: "2", sku: "BHN-002", name: "Tepung Kek & Pastri Superfine", category: "Bahan Mentah", unit: "beg 10kg", date: "2026-11-20", currentStock: 5, reorderPoint: 2, parLevel: 6, supplier: "Pembekal Tepung Malaya Sdn Bhd" },
@@ -976,6 +1060,20 @@
             const dateInput = document.getElementById('item-date');
             if (dateInput) dateInput.value = today;
 
+            // Check existing session in sessionStorage
+            const savedSession = sessionStorage.getItem('royal_bakery_session');
+            if (savedSession) {
+                try {
+                    currentUserSession = JSON.parse(savedSession);
+                    document.getElementById('modal-role-select').classList.add('hidden');
+                    applyRoleUI();
+                } catch(e) {
+                    document.getElementById('modal-role-select').classList.remove('hidden');
+                }
+            } else {
+                document.getElementById('modal-role-select').classList.remove('hidden');
+            }
+
             if (activeFirebaseConfig && activeFirebaseConfig.databaseURL) {
                 await initRealtimeBackend(activeFirebaseConfig);
             } else {
@@ -984,6 +1082,90 @@
                 updateAllViews();
             }
         };
+
+        // Role Selection Handlers
+        window.selectRole = function(role) {
+            if (role === 'student') {
+                document.getElementById('modal-role-select').classList.add('hidden');
+                document.getElementById('modal-student-login').classList.remove('hidden');
+            }
+        }
+
+        window.showAdminLoginPrompt = function() {
+            document.getElementById('modal-role-select').classList.add('hidden');
+            document.getElementById('modal-admin-login').classList.remove('hidden');
+        }
+
+        window.backToRoleSelect = function() {
+            document.getElementById('modal-student-login').classList.add('hidden');
+            document.getElementById('modal-admin-login').classList.add('hidden');
+            document.getElementById('modal-role-select').classList.remove('hidden');
+        }
+
+        window.confirmStudentLogin = function() {
+            const name = document.getElementById('student-name-input').value.trim();
+            if (!name) {
+                showToast("Sila masukkan nama anda.", "error");
+                return;
+            }
+            currentUserSession = { role: 'student', name: `Pelajar: ${name}` };
+            sessionStorage.setItem('royal_bakery_session', JSON.stringify(currentUserSession));
+            document.getElementById('modal-student-login').classList.add('hidden');
+            applyRoleUI();
+            showToast(`Selamat datang, ${name} (Akses Pelajar)`, "success");
+        }
+
+        window.confirmAdminLogin = function() {
+            const name = document.getElementById('admin-name-input').value.trim();
+            const pass = document.getElementById('admin-pass-input').value;
+            if (!name) {
+                showToast("Sila masukkan nama admin.", "error");
+                return;
+            }
+            if (pass !== "adminkvsas26") {
+                showToast("Kata laluan admin salah!", "error");
+                return;
+            }
+            currentUserSession = { role: 'admin', name: `Admin: ${name}` };
+            sessionStorage.setItem('royal_bakery_session', JSON.stringify(currentUserSession));
+            document.getElementById('modal-admin-login').classList.add('hidden');
+            applyRoleUI();
+            showToast(`Log masuk berjaya sebagai Admin (${name})`, "success");
+        }
+
+        window.logoutSession = function() {
+            sessionStorage.removeItem('royal_bakery_session');
+            currentUserSession = null;
+            document.getElementById('admin-pass-input').value = '';
+            document.getElementById('student-name-input').value = '';
+            document.getElementById('modal-role-select').classList.remove('hidden');
+        }
+
+        function applyRoleUI() {
+            const badgeName = document.getElementById('session-name');
+            const badgeIcon = document.getElementById('session-icon');
+            const btnAddItem = document.getElementById('btn-add-item');
+            const btnStockIn = document.getElementById('btn-stock-in');
+            const btnResetSample = document.getElementById('btn-reset-sample');
+            const btnClearLogs = document.getElementById('btn-clear-logs');
+
+            if (badgeName) badgeName.innerText = currentUserSession ? currentUserSession.name : "Pengguna";
+
+            if (currentUserSession && currentUserSession.role === 'student') {
+                if (badgeIcon) badgeIcon.className = "fa-solid fa-user-graduate text-blue-400";
+                // Hide administrative features for students
+                if (btnAddItem) btnAddItem.style.display = 'none';
+                if (btnStockIn) btnStockIn.style.display = 'none';
+                if (btnResetSample) btnResetSample.style.display = 'none';
+                if (btnClearLogs) btnClearLogs.style.display = 'none';
+            } else {
+                if (badgeIcon) badgeIcon.className = "fa-solid fa-user-shield text-emerald-400";
+                if (btnAddItem) btnAddItem.style.display = 'flex';
+                if (btnStockIn) btnStockIn.style.display = 'flex';
+                if (btnResetSample) btnResetSample.style.display = 'inline-block';
+                if (btnClearLogs) btnClearLogs.style.display = 'inline-block';
+            }
+        }
 
         async function initRealtimeBackend(config) {
             try {
@@ -1232,6 +1414,10 @@
         /* ==================== CORE EVENT HANDLERS ==================== */
         async function handleSaveItem(e) {
             e.preventDefault();
+            if (currentUserSession && currentUserSession.role === 'student') {
+                showToast("Pelajar tidak dibenarkan menambah bahan baharu.", "error");
+                return;
+            }
 
             const editId = document.getElementById('item-edit-id').value;
             const sku = document.getElementById('item-sku').value.trim();
@@ -1279,6 +1465,7 @@
             if (actualDelta === 0 && delta < 0) return;
 
             const now = new Date();
+            const userName = currentUserSession ? currentUserSession.name : 'Pengguna';
             const logEntry = {
                 timestamp: now.getTime(),
                 time: now.toLocaleString('ms-MY'),
@@ -1286,7 +1473,7 @@
                 itemName: item.name,
                 qty: `${delta > 0 ? '+' : ''}${actualDelta} ${item.unit}`,
                 reason: 'Pelarasan Pantas Inventori',
-                user: 'Staf Royal Bakery'
+                user: userName
             };
 
             if (rtdb) {
@@ -1303,10 +1490,15 @@
 
         async function handleStockIn(e) {
             e.preventDefault();
+            if (currentUserSession && currentUserSession.role === 'student') {
+                showToast("Pelajar tidak dibenarkan melakukan fungsi Terima Stok.", "error");
+                return;
+            }
+
             const itemId = document.getElementById('stock-in-item').value;
             const qty = parseFloat(document.getElementById('stock-in-qty').value) || 0;
             const refNote = document.getElementById('stock-in-supplier').value.trim() || 'Terima Serahan';
-            const user = document.getElementById('stock-in-user').value.trim() || 'Staf';
+            const user = document.getElementById('stock-in-user').value;
 
             const item = items.find(i => i.id === itemId);
             if (!item) return;
@@ -1343,7 +1535,7 @@
             const itemId = document.getElementById('stock-out-item').value;
             const qty = parseFloat(document.getElementById('stock-out-qty').value) || 0;
             const reason = document.getElementById('stock-out-reason').value;
-            const user = document.getElementById('stock-out-user').value.trim() || 'Staf';
+            const user = document.getElementById('stock-out-user').value;
 
             const item = items.find(i => i.id === itemId);
             if (!item) return;
@@ -1376,6 +1568,11 @@
         }
 
         async function confirmDeleteItem(id) {
+            if (currentUserSession && currentUserSession.role === 'student') {
+                showToast("Pelajar tidak dibenarkan memadam bahan.", "error");
+                return;
+            }
+
             const item = items.find(i => i.id === id);
             if (!item) return;
 
@@ -1393,6 +1590,8 @@
         }
 
         async function resetToSampleData() {
+            if (currentUserSession && currentUserSession.role === 'student') return;
+
             showConfirmModal("Set Semula Data Inventori", "Adakah anda pasti mahu mengembalikan data sampel asal ke pangkalan data?", async () => {
                 if (rtdb) {
                     await remove(ref(rtdb, 'items'));
@@ -1446,6 +1645,7 @@
                 `;
             } else {
                 alertItems.forEach(item => {
+                    const isStudent = currentUserSession && currentUserSession.role === 'student';
                     alertTable.innerHTML += `
                         <tr class="hover:bg-slate-50 transition">
                             <td class="py-2.5 px-3 font-semibold text-slate-800">
@@ -1457,9 +1657,7 @@
                             <td class="py-2.5 px-3 text-slate-500">${item.reorderPoint} ${item.unit}</td>
                             <td class="py-2.5 px-3 text-slate-600 font-mono">${item.date || '-'}</td>
                             <td class="py-2.5 px-3 text-right">
-                                <button onclick="window.quickStockIn('${item.id}')" class="px-2 py-1 text-[11px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded shadow-2xs transition">
-                                    + Terima
-                                </button>
+                                ${!isStudent ? `<button onclick="window.quickStockIn('${item.id}')" class="px-2 py-1 text-[11px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded shadow-2xs transition">+ Terima</button>` : `<button onclick="window.openStockOutModal(); document.getElementById('stock-out-item').value='${item.id}';" class="px-2 py-1 text-[11px] bg-rose-600 hover:bg-rose-700 text-white font-bold rounded shadow-2xs transition">Guna</button>`}
                             </td>
                         </tr>
                     `;
@@ -1521,6 +1719,8 @@
                 return;
             }
 
+            const isStudent = currentUserSession && currentUserSession.role === 'student';
+
             filtered.forEach(item => {
                 let statusBadge = `<span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded">ADA STOK</span>`;
 
@@ -1536,6 +1736,7 @@
                             <div class="font-bold text-slate-900">${item.name}</div>
                             <div class="flex items-center space-x-2 mt-1">
                                 <span class="text-[10px] text-slate-400 font-mono bg-slate-100 px-1.5 py-0.5 rounded">${item.sku}</span>
+                                ${!isStudent ? `
                                 <button onclick="window.quickStockIn('${item.id}')" class="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded transition shadow-2xs" title="Terima Stok">
                                     <i class="fa-solid fa-plus text-[9px]"></i>
                                     <span>Terima Stok</span>
@@ -1543,6 +1744,12 @@
                                 <button onclick="window.adjustStockDirect('${item.id}', 1)" class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold bg-blue-100 hover:bg-blue-200 text-blue-800 rounded transition" title="+1 Unit">
                                     +1
                                 </button>
+                                ` : `
+                                <button onclick="window.openStockOutModal(); document.getElementById('stock-out-item').value='${item.id}';" class="inline-flex items-center space-x-1 px-2 py-0.5 text-[10px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded transition shadow-2xs">
+                                    <i class="fa-solid fa-minus text-[9px]"></i>
+                                    <span>Guna</span>
+                                </button>
+                                `}
                             </div>
                         </td>
                         <td class="py-3 px-4 text-slate-600">${item.category}</td>
@@ -1550,22 +1757,26 @@
                         <td class="py-3 px-4 font-bold ${item.currentStock <= item.reorderPoint ? 'text-amber-600' : 'text-slate-900'}">
                             <div class="flex items-center space-x-1.5">
                                 <span>${item.currentStock} ${item.unit}</span>
+                                ${!isStudent ? `
                                 <div class="inline-flex space-x-0.5 ml-1">
                                     <button onclick="window.adjustStockDirect('${item.id}', -1)" class="w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-bold flex items-center justify-center text-[10px]" title="Tolak 1">-</button>
                                     <button onclick="window.adjustStockDirect('${item.id}', 1)" class="w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-bold flex items-center justify-center text-[10px]" title="Tambah 1">+</button>
                                 </div>
+                                ` : ''}
                             </div>
                         </td>
                         <td class="py-3 px-4 text-slate-500">${item.reorderPoint} / ${item.parLevel} ${item.unit}</td>
                         <td class="py-3 px-4 text-slate-700 font-medium">${item.supplier || '-'}</td>
                         <td class="py-3 px-4">${statusBadge}</td>
                         <td class="py-3 px-4 text-right space-x-2">
+                            ${!isStudent ? `
                             <button onclick="window.editItem('${item.id}')" class="text-slate-400 hover:text-blue-700 transition" title="Kemas Kini">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
                             <button onclick="window.confirmDeleteItem('${item.id}')" class="text-slate-400 hover:text-rose-600 transition" title="Padam">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
+                            ` : `<span class="text-[10px] text-slate-400 italic">Akses Terhad</span>`}
                         </td>
                     </tr>
                 `;
@@ -1601,6 +1812,7 @@
             }
 
             const uniqueCats = new Set(reorderItems.map(i => i.category)).size;
+            const isStudent = currentUserSession && currentUserSession.role === 'student';
 
             reorderItems.forEach(item => {
                 const suggestedOrder = Math.max(0, item.parLevel - item.currentStock);
@@ -1618,9 +1830,7 @@
                         <td class="py-3 px-4 font-bold text-blue-700">${suggestedOrder} ${item.unit}</td>
                         <td class="py-3 px-4 font-mono text-slate-700">${item.date || '-'}</td>
                         <td class="py-3 px-4 text-right">
-                            <button onclick="window.quickStockIn('${item.id}')" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded shadow-2xs transition">
-                                Terima Stok
-                            </button>
+                            ${!isStudent ? `<button onclick="window.quickStockIn('${item.id}')" class="px-3 py-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded shadow-2xs transition">Terima Stok</button>` : `<span class="text-[10px] text-slate-400 italic">Admin Sahaja</span>`}
                         </td>
                     </tr>
                 `;
@@ -1643,6 +1853,11 @@
         }
 
         function openPOModal() {
+            if (currentUserSession && currentUserSession.role === 'student') {
+                showToast("Pelajar tidak dibenarkan melihat/mencetak Borang PO.", "error");
+                return;
+            }
+
             const reorderItems = items.filter(item => item.currentStock <= item.reorderPoint);
             if (reorderItems.length === 0) {
                 showToast("Tiada item pesanan semula diperlukan buat masa ini.", "info");
@@ -1743,6 +1958,8 @@
         }
 
         function openAddItemModal() {
+            if (currentUserSession && currentUserSession.role === 'student') return;
+
             document.getElementById('modal-item-title').innerText = "Tambah Bahan Baharu Royal Bakery";
             document.getElementById('item-edit-id').value = '';
             document.getElementById('form-item').reset();
@@ -1752,6 +1969,8 @@
         }
 
         function editItem(id) {
+            if (currentUserSession && currentUserSession.role === 'student') return;
+
             const item = items.find(i => i.id === id);
             if (!item) return;
 
@@ -1771,12 +1990,18 @@
         }
 
         function openStockInModal() {
+            if (currentUserSession && currentUserSession.role === 'student') {
+                showToast("Pelajar hanya dibenarkan menggunakan fungsi Guna / Sisa bahan sahaja.", "error");
+                return;
+            }
             populateDropdowns();
             document.getElementById('form-stock-in').reset();
+            document.getElementById('stock-in-user').value = currentUserSession ? currentUserSession.name : 'Admin';
             document.getElementById('modal-stock-in').classList.remove('hidden');
         }
 
         function quickStockIn(itemId) {
+            if (currentUserSession && currentUserSession.role === 'student') return;
             openStockInModal();
             document.getElementById('stock-in-item').value = itemId;
         }
@@ -1784,6 +2009,7 @@
         function openStockOutModal() {
             populateDropdowns();
             document.getElementById('form-stock-out').reset();
+            document.getElementById('stock-out-user').value = currentUserSession ? currentUserSession.name : 'Pengguna';
             document.getElementById('modal-stock-out').classList.remove('hidden');
         }
 
@@ -1861,6 +2087,8 @@
         }
 
         async function clearActivityLogs() {
+            if (currentUserSession && currentUserSession.role === 'student') return;
+
             showConfirmModal("Kosongkan Log Aktiviti", "Adakah anda pasti mahu memadam semua rekod log aktiviti stok?", async () => {
                 if (rtdb) {
                     await remove(ref(rtdb, 'logs'));
